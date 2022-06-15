@@ -1,0 +1,39 @@
+ManifestFileVersion: 0
+CRC: 2661079400
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 0590308733f1ee5f0d209a49405e7316
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: fecf8be0c4abf9bc2804f2247ce41f5c
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 58
+  Script: {instanceID: 0}
+- Class: 68
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+Assets:
+- Assets/Prefavs/Hazards/spikes.prefab
+- Assets/Prefavs/Hazards/sawblade.prefab
+Dependencies: []

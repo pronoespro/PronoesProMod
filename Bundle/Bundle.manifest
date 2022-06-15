@@ -1,0 +1,38 @@
+ManifestFileVersion: 0
+CRC: 4138054408
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: entrance
+      Dependencies:
+        Dependency_0: portal
+        Dependency_1: sounds
+    Info_1:
+      Name: portal
+      Dependencies: {}
+    Info_2:
+      Name: music
+      Dependencies: {}
+    Info_3:
+      Name: ui
+      Dependencies: {}
+    Info_4:
+      Name: createdtown
+      Dependencies:
+        Dependency_0: sounds
+    Info_5:
+      Name: pronoespro
+      Dependencies: {}
+    Info_6:
+      Name: sounds
+      Dependencies: {}
+    Info_7:
+      Name: brokenobjs
+      Dependencies:
+        Dependency_0: sounds
+    Info_8:
+      Name: hazards
+      Dependencies: {}
+    Info_9:
+      Name: newattacks
+      Dependencies: {}

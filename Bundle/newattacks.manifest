@@ -1,0 +1,61 @@
+ManifestFileVersion: 0
+CRC: 803156452
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 9d9c864263bf5fa22f725482ecb2ee29
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2f22617b4028db06ca73f7256a7b5c1f
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 50
+  Script: {instanceID: 0}
+- Class: 58
+  Script: {instanceID: 0}
+- Class: 60
+  Script: {instanceID: 0}
+- Class: 61
+  Script: {instanceID: 0}
+- Class: 62
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 82
+  Script: {instanceID: 0}
+- Class: 83
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 198
+  Script: {instanceID: 0}
+- Class: 199
+  Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+Assets:
+- Assets/Prefavs/Attacks/ShootSawbladeAttack.prefab
+- Assets/Prefavs/Attacks/AppleAttack.prefab
+- Assets/Prefavs/Attacks/ApplePieSawblade.prefab
+- Assets/Prefavs/Attacks/NailBarrage.prefab
+- Assets/Prefavs/Attacks/NailAttack.prefab
+- Assets/Prefavs/Attacks/AppleSliceAttack.prefab
+- Assets/Prefavs/Attacks/FallingNails.prefab
+- Assets/Prefavs/Attacks/Dee_explode.prefab
+- Assets/Prefavs/Attacks/GiantNail.prefab
+- Assets/Prefavs/Attacks/SawbladeAttack.prefab
+Dependencies: []
