@@ -9,8 +9,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Audio;
+using UnityEngine.Events;
 using UnityEngine.UI;
 using UObject = UnityEngine.Object;
 
@@ -25,18 +28,21 @@ namespace PronoesProMod
         public Dictionary<String, AssetBundle> GOBundle;
         public Dictionary<String, AssetBundle> NPCBundle;
         public Dictionary<String, AssetBundle> soundBundle;
+        public Dictionary<String, AssetBundle> skinsBundle;
+
         public Dictionary<string,Dictionary<string, GameObject>> preloadedObjs;
         public static Satchel.Core satchel =new Satchel.Core();
 
-        public List<string> levelsToLoad = new List<string>() { "entrance","createdtown" };
+        public List<string> levelsToLoad = new List<string>() { "entrance","createdtown", "appleminigame" };
         public List<string> objectsToLoad = new List<string>() { "portal","music","ui","brokenobjs", "newattacks" };
-        public List<string> npcsToLoad = new List<string>() { "pronoespro","dee-coder","de-playtest"};
+        public List<string> npcsToLoad = new List<string>() { "npcs","dee-coder","de-playtest"};
+        public List<string> skinsToLoad = new List<string>() {"skins" };
         public string soundsToLoad = "sounds";
 
         public bool hasSwordsSpell, hasShieldSpell, hasTeleportSpell;
         public int equipedSoulType, equipedDiveType, equipedShriekType;
 
-        public string[] spellNames = new string[] { "SawbladeAttack","NailAttack","AppleAttack","FallingNails","GiantNail", "ShootSawbladeAttack", "NailBarrage", "Dee_explode", "ApplePieSawblade", "AppleSliceAttack" };
+        public string[] spellNames = new string[] { "SawbladeAttack","NailAttack","AppleAttack","FallingNails","GiantNail", "ShootSawbladeAttack", "NailBarrage", "Dee_explode", "ApplePieSawblade", "AppleSliceAttack", "SawbladeShout" };
         public Dictionary<string, GameObject> newSpells;
         public int[] spellUsedTimes;
         public int[] spellAmmount;
@@ -45,8 +51,6 @@ namespace PronoesProMod
         public bool playerFalling;
 
         public bool fadedIn;
-
-        private const string stateName = "GSP Workshop Speed Buff";
 
         public Dictionary<string, FsmState> ogDiveStates;
         public string[] ogDiveStateNames = new string[] { "Quake1 Land", "Q2 Land", "Q2 Pillar","Quake1 Down","Quake2 Down","Quake Antic", "Spell End"};
@@ -58,8 +62,12 @@ namespace PronoesProMod
         public static GameObject levelNameDisplay;
         public static Transform spellChangeUI;
 
-        public string[] spellSpriteNames = new string[] { "icon_apple_shriek", "icon_apple_soul", "icon_apple_dive", "icon_def_dive", "icon_def_shriek", "icon_def_soul", "icon_nailmaster_dive", "icon_nailmaster_shriek", "icon_nailmaster_soul", "icon_sawblade_dive", "icon_sawblade_soul", "icon_sawblade_shriek" };
+        public string[] spellSpriteNames = new string[] { "icon_apple_shriek", "icon_apple_soul", "icon_apple_dive", "icon_def_dive", "icon_def_shriek", "icon_def_soul", "icon_nailmaster_dive", "icon_nailmaster_shriek", "icon_nailmaster_soul", "icon_sawblade_dive", "icon_sawblade_soul", "icon_sawblade_shriek", "icon_pro_soul" };
         public Dictionary<string, Sprite> spellSprites;
+
+
+        public static string[] MeleeAttacks = new string[] { "Nail Attack" };
+
 
         public Dictionary<string, string[]> spellNameKeys = new Dictionary<string, string[]>(){
             { "INV_NAME_SPELL_SCREAM1",new string[]{ "Soul_sawblade_0", "Soul_nailmaster_0", "Shriek_apple_0" } },
@@ -77,6 +85,26 @@ namespace PronoesProMod
             {"INV_DESC_SPELL_QUAKE1",new string[] { "Shriek_sawblade_0_desc", "Shriek_nailmaster_0_desc", "Dive_apple_0_desc" } },
             {"INV_DESC_SPELL_QUAKE2", new string[]{ "Shriek_sawblade_1_desc", "Shriek_nailmaster_1_desc", "Dive_apple_1_desc" } }
         };
+
+        public List<(string, string)> toPreload = new List<(string, string)>
+        {
+                ( "Cliffs_01","Cornifer Card"),
+                ( "Town","_NPCs"),
+                ("Tutorial_01","BlurPlane (1)"),
+                ("Town","RestBench"),
+                ("Funfus3_40","Station Bell"),
+                ("Funfus3_40","secret sound"),
+                ("Tutorial_01","_SceneManager"),
+                ("Tutorial_01","TileMap"),
+                ("Tutorial_01","TileMap Render Data")
+        };
+
+        public bool[] upgradedCharms;
+
+        public InteractionPrompt interactionPropt;
+
+        public static AudioMixer enviroMixer,musicMixer,actorsMixer,masterMixer,atmosMixer;
+
         /*
         string UI = "UI";
 
@@ -92,17 +120,9 @@ namespace PronoesProMod
 
         public override List<(string, string)> GetPreloadNames()
         {
-            return new List<(string, string)>()
-            {
-                ( "Cliffs_01","Cornifer Card"),
-                ( "Town","_NPCs"),
-                ("Tutorial_01","BlurPlane (1)"),
-                ("Town","RestBench"),
-                ("Fungus3_25b","Jelly Egg Bomb"),
-                ("Funfus3_40","Station Bell"),
-                ("Funfus3_40","secret sound")
-            };
+            return toPreload;
         }
+
 
         public void UnloadVariables()
         {
@@ -144,6 +164,18 @@ namespace PronoesProMod
             InitializeUI();
 
             Log("Finished Initializing");
+
+
+            /*
+            foreach(AudioMixer mix in Resources.FindObjectsOfTypeAll<AudioMixer>())
+            {
+                Log("---Audio Mixer: "+mix.name+"---");
+            }*/
+            enviroMixer = Resources.FindObjectsOfTypeAll<AudioMixer>().First(x => x.name == "EnviroEffects");
+            musicMixer = Resources.FindObjectsOfTypeAll<AudioMixer>().First(x => x.name == "Music");
+            actorsMixer = Resources.FindObjectsOfTypeAll<AudioMixer>().First(x => x.name == "Actors");
+            atmosMixer = Resources.FindObjectsOfTypeAll<AudioMixer>().First(x => x.name == "Atmos");
+            masterMixer = Resources.FindObjectsOfTypeAll<AudioMixer>().First(x => x.name == "Master");
         }
 
         public void Unload()
@@ -158,16 +190,22 @@ namespace PronoesProMod
             UnloadUI();
 
             Instance = null;
+
+            enviroMixer = musicMixer = actorsMixer = atmosMixer = masterMixer = null;
         }
         #endregion
 
         #region Bundles
         public void SetupBundles()
         {
+
+            upgradedCharms = new bool[5];
+
             SceneBundle = new Dictionary<string, AssetBundle>();
             GOBundle = new Dictionary<string, AssetBundle>();
             NPCBundle = new Dictionary<string, AssetBundle>();
             soundBundle = new Dictionary<string, AssetBundle>();
+            skinsBundle = new Dictionary<string, AssetBundle>();
 
             Assembly asm = Assembly.GetExecutingAssembly();
             Log("Searching for Levels");
@@ -187,7 +225,7 @@ namespace PronoesProMod
                     string bundleName = Path.GetExtension(res).Substring(1);
                     if (levelsToLoad.Contains(bundleName))
                     {
-                        Log("Found Level");
+                        Log("Found Level "+bundleName);
                         SceneBundle.Add(bundleName, AssetBundle.LoadFromMemory(buffer));
                     }else if (objectsToLoad.Contains(bundleName))
                     {
@@ -198,6 +236,9 @@ namespace PronoesProMod
                     }else if (bundleName == soundsToLoad)
                     {
                         soundBundle.Add(bundleName, AssetBundle.LoadFromMemory(buffer));
+                    }else if (skinsToLoad.Contains(bundleName))
+                    {
+                        skinsBundle.Add(bundleName, AssetBundle.LoadFromMemory(buffer));
                     }
                     else
                     {
@@ -264,6 +305,16 @@ namespace PronoesProMod
 
         }
 
+        public static GameObject InstanciatePreloaded(string scene, string obj)
+        {
+            if (Instance.preloadedObjs.ContainsKey(scene) && Instance.preloadedObjs[scene].ContainsKey(obj))
+            {
+                GameObject instanciated = GameObject.Instantiate(Instance.preloadedObjs[scene][obj]);
+                return instanciated;
+            }
+            return null;
+        }
+
         private void SetDirection(On.HeroController.orig_Move orig, HeroController self, float move_direction)
         {
             if (Mathf.Abs(move_direction) > 0)
@@ -318,7 +369,7 @@ namespace PronoesProMod
                     spellChangeUI.gameObject.SetActive(false);
                 }
             }
-            if (InputHandler.Instance.inputActions.menuSubmit.WasReleased)
+            if (InputHandler.Instance.inputActions.textSpeedup.WasReleased)
             {
                 levelNameDisplay.transform.Find("DialogBox").SendMessage("ContinueConversation");
             }
@@ -373,6 +424,9 @@ namespace PronoesProMod
                 case 3:
                     chosenIconName += "apple";
                     break;
+                case 4:
+                    chosenIconName += "pro";
+                    break;
             }
             chosenIconName += "_dive";
             if (spellSprites.ContainsKey(chosenIconName))
@@ -396,6 +450,9 @@ namespace PronoesProMod
                 case 3:
                     chosenIconName += "apple";
                     break;
+                case 4:
+                    chosenIconName += "pro";
+                    break;
             }
             chosenIconName += "_shriek";
             if (spellSprites.ContainsKey(chosenIconName))
@@ -409,7 +466,7 @@ namespace PronoesProMod
 
         public Vector2 SmallUpDash(Vector2 vel)
         {
-            if (PlayerData.instance.GetBool("equippedCharm_31") && vel.y == 0)
+            if (PlayerData.instance.GetBool("equippedCharm_31") && vel.y == 0 && upgradedCharms[0])
             {
                 return vel + new Vector2(0f, Mathf.Abs(vel.x) * 15f * Time.deltaTime);
             }
@@ -418,7 +475,15 @@ namespace PronoesProMod
 
         private void ModifyTilemapInfo(On.GameManager.orig_RefreshTilemapInfo orig, GameManager self, string targetScene)
         {
+            if (self.tilemap == null)
+            {
+                Log("Tilemap not found");
+                InstanciatePreloaded("Tutorial_01", "TileMap");
+                InstanciatePreloaded("Tutorial_01", "TileMap Render Data");
+            }
+
             orig(self, targetScene);
+
             if (targetScene == "entrance")
             {
                 self.tilemap.width = 60;
@@ -433,7 +498,24 @@ namespace PronoesProMod
                 self.tilemap.height = 100;
                 self.sceneWidth = 545;
                 self.sceneHeight = 100;
-                GameObject.FindObjectOfType<GameMap>().SetManualTilemap(0, 0, 545, 100);
+                if (GameObject.FindObjectOfType<GameMap>() != null)
+                {
+                    GameObject.FindObjectOfType<GameMap>().SetManualTilemap(0, 0, 545, 100);
+                }
+            }
+            else if (targetScene == "appleminigame")
+            {
+                if (self.tilemap != null)
+                {
+                    self.tilemap.width = 72;
+                    self.tilemap.height = 33;
+                    self.sceneWidth = 72;
+                    self.sceneHeight = 33;
+                }
+                if (GameObject.FindObjectOfType<GameMap>() != null)
+                {
+                    GameObject.FindObjectOfType<GameMap>().SetManualTilemap(0, 0, 72, 33);
+                }
             }
         }
         #endregion
@@ -471,6 +553,7 @@ namespace PronoesProMod
             Instance.CreateSpell(7, 3,self,ref Instance.newSpells);
             Instance.CreateSpell(8, 4,self,ref Instance.newSpells);
             Instance.CreateSpell(9, 20,self,ref Instance.newSpells);
+            Instance.CreateSpell(10, 1,self,ref Instance.newSpells);
 
         }
 
@@ -605,7 +688,7 @@ namespace PronoesProMod
                             case 7:
 
                                 dmg = spell.transform.GetChild(0).gameObject.AddComponent<DamageEnemies>();
-                                dmg.damageDealt = PlayerData.instance.nailDamage;
+                                dmg.damageDealt = PlayerData.instance.nailDamage*2;
                                 dmg.attackType = AttackTypes.Spell;
                                 dmg.ignoreInvuln = false;
                                 dmg.magnitudeMult = 0.1f;
@@ -636,6 +719,24 @@ namespace PronoesProMod
 
                                 apple=dmg.gameObject.AddComponent<AppleAttack>();
                                 apple.targetGO = spell;
+                                break;
+                            case 10:
+
+                                saw = spell.AddComponent<SawbladeAttack>();
+                                saw.collisionMult = 1f;
+                                saw.destroyTime = 4f;
+                                saw.maxCollide = 15;
+                                saw.dmgs = new List<DamageEnemies>();
+
+                                for (int child = 0; child < spell.transform.childCount; child++)
+                                {
+                                    dmg = spell.transform.GetChild(child).gameObject.AddComponent<DamageEnemies>();
+                                    dmg.damageDealt = PlayerData.instance.nailDamage / 2;
+                                    dmg.attackType = AttackTypes.Spell;
+                                    dmg.ignoreInvuln = false;
+                                    dmg.magnitudeMult = 1;
+                                    saw.dmgs.Add(dmg);
+                                }
                                 break;
                         }
                     }
@@ -962,7 +1063,12 @@ namespace PronoesProMod
                             createdSpell.GetComponentInChildren<ParticleSystem>().Play();
                             createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
                             //createdSpell.GetComponent<AudioSource>().Play();
-                            createdSpell.transform.GetChild(0).SendMessage("ChangeMoveDir", new Vector2(playerFaceLeft ? 0.1f : -0.1f, 0.3f));
+                            DeeExplosionAttack atk = createdSpell.transform.GetChild(0).GetComponent<DeeExplosionAttack>();
+                            if (atk != null){
+                                atk.transform.localScale = new Vector3(playerFaceLeft ? -1 : 1, 1, 1);
+                                atk.ChangeMoveDir(new Vector2(playerFaceLeft ? 7f : -7f, 3f));
+                                atk.ResetAttack();
+                            }
                         }, 3);
 
                         fsm.RemoveAction("Fireball 2", 3);
@@ -973,9 +1079,14 @@ namespace PronoesProMod
                             createdSpell.transform.position = HeroController.instance.transform.position;
                             createdSpell.GetComponentInChildren<ParticleSystem>().Play();
                             //createdSpell.GetComponent<AudioSource>().Play();
+                            createdSpell.transform.GetChild(0).gameObject.SetActive(true);
                             createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
-                            createdSpell.transform.GetChild(0).SendMessage("ChangeMoveDir", new Vector2(playerFaceLeft ? 0.1f : -0.1f, 0.3f));
-
+                            DeeExplosionAttack atk = createdSpell.transform.GetChild(0).GetComponent<DeeExplosionAttack>();
+                            if (atk != null){
+                                atk.transform.localScale = new Vector3(playerFaceLeft ? -1 : 1, 1, 1);
+                                atk.ChangeMoveDir(new Vector2(playerFaceLeft ? 7f : -7f, 3f));
+                                atk.ResetAttack();
+                            }
                         }, 3);
 
                         fsm.RemoveAction("Fireball Recoil", 9);
@@ -1008,6 +1119,41 @@ namespace PronoesProMod
                     {
                         RestoreShriek(fsm);
                         Log("Sawblade shriek!");
+
+                        fsm.RemoveAction("Scream Burst 1", 7);
+                        fsm.RemoveAction("Scream Burst 1", 6);
+
+                        fsm.RemoveAction("Scream Burst 1", 2);
+                        fsm.InsertMethod("Scream Burst 1", () => {
+                            createdSpell = ActivateSpell(10);
+
+                            if (createdSpell.activeInHierarchy)
+                            {
+                                createdSpell.SetActive(false);
+                            }
+
+                            createdSpell.SetActive(true);
+                            createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, 2, 0);
+                            createdSpell.GetComponent<Animator>().SetInteger("shoutLvl", 0);
+                        }, 2);
+
+                        fsm.RemoveAction("Scream Burst 2", 8);
+                        fsm.RemoveAction("Scream Burst 2", 7);
+
+                        fsm.RemoveAction("Scream Burst 2", 3);
+                        fsm.InsertMethod("Scream Burst 2", () => {
+                            createdSpell = ActivateSpell(10);
+
+                            if (createdSpell.activeInHierarchy)
+                            {
+                                createdSpell.SetActive(false);
+                            }
+
+                            createdSpell.SetActive(true);
+
+                            createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, 2, 0);
+                            createdSpell.GetComponent<Animator>().SetInteger("shoutLvl", 1);
+                        }, 3);
                         shriekType = 1;
                     }
                     break;
@@ -1269,16 +1415,64 @@ namespace PronoesProMod
             }
         }
 
-        public void ShowDialogBox(string nameSuper,string name,string NameSub,string[] dialog,float dialogSpeed=1)
+        public void ShowDialogBox(string nameSuper,string name,string NameSub,string[] dialog,string[] sounds,float dialogSpeed=1)
         {
             if (levelNameDisplay != null)
             {
-                Transform box= levelNameDisplay.transform.Find("DialogBox");
+                Transform box = levelNameDisplay.transform.Find("DialogBox");
                 box.gameObject.SetActive(true);
 
-                DialogBox dialBox=box.GetComponent<DialogBox>();
+                DialogBox dialBox = box.GetComponent<DialogBox>();
 
-                dialBox.SetDialog(new string[] { name, nameSuper, NameSub }, dialog,dialogSpeed);
+                if (dialBox != null)
+                {
+                    dialBox.SetDialog(new string[] { name, nameSuper, NameSub }, dialog,sounds, dialogSpeed);
+                    dialBox.onConversationContinue.RemoveAllListeners();
+                    dialBox.onConversationEnd.RemoveAllListeners();
+                    dialBox.onConversationStart.RemoveAllListeners();
+                }
+            }
+        }
+
+        public void StartInteraction(Vector2 pos,string prompt)
+        {
+            if (interactionPropt != null)
+            {
+                interactionPropt.StartInteractable(pos);
+                interactionPropt.SetInteractionPrompt(prompt);
+            }
+        }
+
+        public void EndInteraction()
+        {
+            interactionPropt.EndInteractable();
+        }
+
+        public void ChangeDialogEvents(UnityEvent start,UnityEvent next, UnityEvent end)
+        {
+            if (levelNameDisplay != null) {
+                Transform box = levelNameDisplay.transform.Find("DialogBox");
+                DialogBox dialBox = box.GetComponent<DialogBox>();
+                if (dialBox != null)
+                {
+                    if (start!=null) {
+                        dialBox.onConversationStart = start;
+                    }else{
+                        dialBox.onConversationStart.RemoveAllListeners();
+                    }
+
+                    if (next!=null) {
+                        dialBox.onConversationContinue= next;
+                    }else{
+                        dialBox.onConversationContinue.RemoveAllListeners();
+                    }
+
+                    if (start!=null) {
+                        dialBox.onConversationEnd= end;
+                    }else{
+                        dialBox.onConversationEnd.RemoveAllListeners();
+                    }
+                }
             }
         }
 

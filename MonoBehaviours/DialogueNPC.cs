@@ -12,6 +12,7 @@ using System.IO;
 using FrogCore.Ext;
 using Logger = Modding.Logger;
 using FrogCore.Fsm;
+using UnityEngine.Events;
 
 namespace PronoesProMod.MonoBehaviours
 {
@@ -21,6 +22,7 @@ namespace PronoesProMod.MonoBehaviours
     public class DialogueNPC : MonoBehaviour
     {
         public string NextKey;
+        public UnityEvent onDialogStart=new UnityEvent(), onDialogContinue=new UnityEvent(), onDialogEnd=new UnityEvent();
 
         GameObject BoxObject;
 
@@ -125,12 +127,15 @@ namespace PronoesProMod.MonoBehaviours
 
         private void DecideSound()
         {
-            if (SingleClips.ContainsKey(NextKey))
-                SingleSound();
-            else if (MultiClips.ContainsKey(NextKey))
-                MultiSound();
-            else
-                MissingSound();
+            if (NextKey!=null && NextKey != "")
+            {
+                if (SingleClips.ContainsKey(NextKey))
+                    SingleSound();
+                else if (MultiClips.ContainsKey(NextKey))
+                    MultiSound();
+                else
+                    MissingSound();
+            }
         }
 
         private void SingleSound()

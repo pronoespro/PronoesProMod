@@ -64,9 +64,8 @@
     
   <ItemGroup>
     <EmbeddedResource Include="Bundle\entrance" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Bundle\createdtown" />
+    <EmbeddedResource Include="Bundle\appleminigame" />
   </ItemGroup>
   
   <ItemGroup>
@@ -89,7 +88,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Bundle\pronoespro" />
+    <EmbeddedResource Include="Bundle\npcs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Bundle\skins" />
   </ItemGroup>
   
   <ItemGroup>

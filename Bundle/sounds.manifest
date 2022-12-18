@@ -1,9 +1,9 @@
 ManifestFileVersion: 0
-CRC: 2780930852
+CRC: 2437522886
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 9832c055d856683bf8bbe9aadbb0402f
+    Hash: 635b79f6a200d135d53f54c13d488e8b
   TypeTreeHash:
     serializedVersion: 2
     Hash: 3f7d0c5e0986ec71841622bcb2f9be1c
@@ -15,5 +15,7 @@ Assets:
 - Assets/sfx/kahmo.wav
 - Assets/sfx/box.wav
 - Assets/sfx/bouncers.wav
+- Assets/sfx/sigh bapa nara_hk.wav
 - Assets/sfx/spikes.wav
+- Assets/sfx/bla iss_gravity rush.wav
 Dependencies: []

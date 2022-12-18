@@ -5,7 +5,7 @@ namespace PronoesProMod.MonoBehaviours
     public class AppleBasket : MonoBehaviour
     {
 
-        public string appleName="apple";
+        public string appleName="apple_minigame";
         public int applesToReward = 3;
         public int orbReward;
 

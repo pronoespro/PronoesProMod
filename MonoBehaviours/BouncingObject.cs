@@ -5,7 +5,6 @@ namespace PronoesProMod
     public class BouncingObject : MonoBehaviour
 	{
 
-		public string[] MeleeAttacks = new string[] { "Nail Attack" };
 		public string bounceAnimation = "Bounce";
 		public ParticleSystem particles;
 
@@ -21,9 +20,9 @@ namespace PronoesProMod
 
 		private void OnTriggerEnter2D(Collider2D collision)
 		{
-			for(int i = 0; i < MeleeAttacks.Length; i++)
+			for(int i = 0; i < PronoesProMod.MeleeAttacks.Length; i++)
             {
-                if (collision.tag == MeleeAttacks[i])
+                if (collision.tag == PronoesProMod.MeleeAttacks[i])
 				{
 					transform.position =new Vector3(transform.position.x,transform.position.y, desDepth);
 					Rigidbody2D rb = GetComponent<Rigidbody2D>();

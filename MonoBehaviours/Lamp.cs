@@ -48,7 +48,19 @@ namespace PronoesProMod.MonoBehaviours
                             {
 								rb.AddForce(new Vector2(5 * (obj % 2 == 0 ? 1f : -1f), 2));
 								rb.angularVelocity = 360f*(obj%2==0?1f:-1f);
-                            }
+							}
+							AudioSource sound = go.GetComponent<AudioSource>();
+							if (sound != null)
+							{
+								sound.outputAudioMixerGroup = PronoesProMod.enviroMixer.outputAudioMixerGroup;
+							}
+							if (go.GetComponentInChildren<AudioSource>() != null)
+							{
+								foreach (AudioSource sfx in prefav.GetComponentsInChildren<AudioSource>())
+								{
+									sfx.outputAudioMixerGroup = PronoesProMod.enviroMixer.outputAudioMixerGroup;
+								}
+							}
 						}
 					}
 				}

@@ -14,12 +14,17 @@ namespace PronoesProMod
             {"Pronoespro_MAIN","Pronoespro" },
             {"Pronoespro_SUPER","Forgotten dreamer" },
             {"Pronoespro_SUB","or Prono/Pro to his friends" },
-            {"prono_welcome_0","Welcome, ghost of Hallownest" },
-            {"prono_welcome_1","to my dream world" },
-            {"prono_welcome_2","A paradise for me and anyone that manages to get here" },
-            {"prono_welcome_3","Or something like that" },
-            {"prono_welcome_4","Me and my partner here wanted to help you in your journey" },
+            {"prono_welcome_0","Welcome, ghost of Hallownest to my dream world.\nA paradise for me and anyone that manages to get here" },
+            {"prono_welcome_1","Or something like that" },
+            {"prono_welcome_2","Me and my partner here wanted to help you in your journey" },
+            {"prono_welcome_3","If you need anything, be not afraid to ask" },
+            {"prono_welcome_4","" },
             {"prono_dreamnail_0","What a wonderfull tool, wish I had something interesting to say." },
+
+            //Interactables
+
+            { "UltimateBench1","It's a flat sign, it's not even a bench!"},
+            { "UltimateBench2","It doesn't even look good to sit on"},
 
             //Spells
 

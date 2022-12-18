@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿using HutongGames.PlayMaker;
+using Modding;
+using Satchel.Futils;
+using System.Collections;
 using UnityEngine;
 
 namespace PronoesProMod
@@ -24,8 +27,12 @@ namespace PronoesProMod
 		}
 
 		public IEnumerator MakeDreamTransition()
-        {
+		{
+			Fsm dreamNailFSM = HeroController.instance.gameObject.LocateMyFSM("Dream Nail").Fsm;
+			
 			HeroController.instance.IgnoreInput();
+			HeroController.instance.SendMessage("RelinquishControl");
+			HeroController.instance.SendMessage("StopAnimationControl");
 			if (particles != null)
 			{
 				particles.Play();
@@ -38,9 +45,18 @@ namespace PronoesProMod
 			}
 
 			yield return new WaitForSeconds(transitionTime);
-			HeroController.instance.IgnoreInput();
+
+			HeroController.instance.SendMessage("RelinquishControl");
+			HeroController.instance.SendMessage("StopAnimationControl");
+
+			HeroController.instance.gameObject.LocateMyFSM("Roar Lock")
+				.GetVariable<FsmBool>("No Roar")
+				.Value = false;
+			HeroController.instance.FaceLeft();
+
 
 			SceneLoader.DreamTransition(sceneToLoad, curScene);
+			FindObjectOfType<SceneManager>().SendMessage("Start");
 		}
 
 	}

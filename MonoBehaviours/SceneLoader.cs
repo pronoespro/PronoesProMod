@@ -12,12 +12,17 @@ namespace PronoesProMod
         string scene;
 
         public string[] entranceGOs = new string []{ "Portal", "GroundObjs", "Ground","crates_d", "Background", "Spikes_spk" };
-        public string[] townGOs = new string[] { "TownGround","Decorations", "crates_d", "NoBounce_nb", "Spikes_spk","Lamps_l", "Basket" };
+        public string[] townGOs = new string[] { "TownGround","Decorations", "crates_d", "NoBounce_nb", "Spikes_spk","Lamps_l", "Basket", "DeeCart_points", "Temple", "ultimate bench" };
+        public DialogPromptInteractableObject[] townInteractables = new DialogPromptInteractableObject[] { new DialogPromptInteractableObject("ultimate bench", new string[] { "UltimateBench1", "UltimateBench2" },new string[] { ""},"Rest")};
+        public Dictionary<string, DialogSettings[]> townNPCdialogs = new Dictionary<string, DialogSettings[]> { 
+            {"Pro", new DialogSettings[] { new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_welcome_0", "prono_welcome_1", "prono_welcome_2" }, new string[] { "kahmo", "sigh bapa nara_hk", "bla iss_gravity rush" }, "Pronoespro_MAIN", "Pronoespro_SUB", "Pronoespro_SUPER", 2f,true,true ),
+                new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_welcome_3" }, new string[] { "kahmo", "sigh bapa nara_hk", "bla iss_gravity rush" }, "Pronoespro_MAIN", "Pronoespro_SUPER", "Pronoespro_SUB", 2f,false,true)} } };
+        public string[] appleMiniGOs = new string[] { "EntranceWalls", "Objects" };
         public string hitParticlesName = "Bounce_hit",spikePariclesName = "Spike_hit",successParticlesName="Success";
         public ParticleSystem hitParticles,spikeParticles,successParticles;
-        public SceneManager scenesss;
+        public static Transform interactionPrompt;
 
-        public Dictionary<string, int> appleAmmountsPerScene = new Dictionary<string, int>() { { "CreatedTown", 13 } };
+        public Dictionary<string, int> appleAmmountsPerScene = new Dictionary<string, int>() { { "CreatedTown", 13 },{ "appleminigame", 1} };
 
         public void Start()
         {
@@ -36,9 +41,19 @@ namespace PronoesProMod
             }) ;
         }
 
+        public void LoadUI()
+        {
+            AssetBundle ab = PronoesProMod.Instance.GOBundle["ui"];
+            if (ab.Contains("UI"))
+            {
+                interactionPrompt = GameObject.Instantiate<GameObject>(ab.LoadAsset<GameObject>("InteractionPrompts")).transform;
+            }
+        }
+
         private void GameManager_EnterHero(On.GameManager.orig_EnterHero orig, GameManager self, bool additiveGateSearch)
         {
             scene = self.sceneName;
+
             if (self.sceneName == "Tutorial_01")
             {
                 CreateGateway("left", new Vector2(36.5f, 17f), new Vector2(17f, 2f), "entrance", "left", false, true, GameManager.SceneLoadVisualizations.Dream);
@@ -72,6 +87,7 @@ namespace PronoesProMod
             }
             else if (self.sceneName == "entrance")
             {
+                LoadUI();
                 LoadBlurPlane(new Vector3(30, 30, 7),new Vector3(17, 17, 17));
 
                 CreateGateway("left", new Vector2(32, 22), new Vector2(2, 6), "Tutorial_01", "left", false, true, GameManager.SceneLoadVisualizations.Dream);
@@ -108,13 +124,26 @@ namespace PronoesProMod
             }
             else if (self.sceneName == "CreatedTown")
             {
+                LoadUI();
+                if (PronoesProMod.Instance.preloadedObjs.ContainsKey("Tutorial_01") && PronoesProMod.Instance.preloadedObjs["Tutorial_01"].ContainsKey("_SceneManager"))
+                {
+                    GameObject go = GameObject.Instantiate(PronoesProMod.Instance.preloadedObjs["Tutorial_01"]["_SceneManager"]);
+                }
+
                 LoadBlurPlane(new Vector3(420, 30, 7), new Vector3(100, 17, 17));
                 CreateBench(new Vector3(78, 10.75f, 1), new Vector3(1, 1, 1), 0);
 
                 CreateGateway("left", new Vector2(1, 16), new Vector2(4, 8), "entrance", "right", false, false, GameManager.SceneLoadVisualizations.Default);
-                LoadCharacter("pronoespro", new Vector3(105,13.75f,1));
                 
+                PronoCustomNPC pro= LoadCharacter("npcs", new Vector3(105,13.75f,1),"Pro");
+                if (pro != null){
+                    pro.dialogs[0].onEnd.AddListener(() => NextDialogOfNPC(pro));
+                }
+
+                //CreateGateway("right",new Vector2(271, 10.28f), new Vector2(5, 1), "appleminigame", "right", true,false,GameManager.SceneLoadVisualizations.Default);
+
                 LoadObjects(townGOs);
+                LoadInteractables(townInteractables);
 
                 if (PronoesProMod.Instance.GOBundle.ContainsKey("music"))
                 {
@@ -125,6 +154,27 @@ namespace PronoesProMod
 
                 StartCoroutine(ShowTitle(1));
             }
+            else if (self.sceneName== "appleminigame")
+            {
+                if (PronoesProMod.Instance.preloadedObjs.ContainsKey("Tutorial_01") && PronoesProMod.Instance.preloadedObjs["Tutorial_01"].ContainsKey("_SceneManager"))
+                {
+                    GameObject go = GameObject.Instantiate(PronoesProMod.Instance.preloadedObjs["Tutorial_01"]["_SceneManager"]);
+                }
+
+                LoadBlurPlane(new Vector3(420, 30, 7), new Vector3(100, 17, 17));
+                CreateDoor("right", new Vector2(10, 16), new Vector2(1, 16), "CreatedTown", "right", true,true,GameManager.SceneLoadVisualizations.Default);
+
+                LoadObjects(appleMiniGOs);
+
+                if (PronoesProMod.Instance.GOBundle.ContainsKey("music"))
+                {
+                    AssetBundle ab = PronoesProMod.Instance.GOBundle["music"];
+                    AudioClip clip = ab.LoadAsset<AudioClip>("town");
+                    MusicChanger.PlayBackgroundMusicForScene(clip);
+                }
+
+                //StartCoroutine(ShowTitle(2));
+            }
             if (PronoesProMod.Instance != null && PronoesProMod.Instance.fadedIn)
             {
                 PronoesProMod.Instance.CustomSceneFadeOutsis();
@@ -132,14 +182,49 @@ namespace PronoesProMod
             orig(self,additiveGateSearch);
         }
 
+        public void NextDialogOfNPC(PronoCustomNPC npc)
+        {
+            npc.NextDialog();
+        }
+
+        public void LoadInteractables(DialogPromptInteractableObject[] interactables)
+        {
+
+            if (PronoesProMod.Instance.GOBundle.ContainsKey("UI"))
+            {
+                AssetBundle ab = PronoesProMod.Instance.GOBundle["UI"];
+
+                if (ab.Contains("InteractionPrompts"))
+                {
+                    GameObject inter = ab.LoadAsset<GameObject>("InteractionPrompts");
+                    PronoesProMod.Instance.interactionPropt=inter.AddComponent<InteractionPrompt>();
+                }
+
+            }
+
+            foreach(DialogPromptInteractableObject inter in interactables)
+            {
+                GameObject interObj = GameObject.Find(inter.objName);
+                if (interObj != null)
+                {
+                    PronoCustomNPC npc= interObj.AddComponent<PronoCustomNPC>();
+                    npc.dialogs = new DialogSettings[] { new DialogSettings(DialogSettings.GetDefaultMask(), inter.objDialog, inter.dialogSounds,"","","",2, startOnCollision: false,false,inteactionDisplay: inter.interactionPropt) };
+
+                    interObj.AddComponent<NonBouncer>();
+                }
+            }
+        }
+
         public void LoadObjects(string[] objNames)
         {
             GameObject hitPart = GameObject.Find(hitParticlesName);
-            if (hitPart != null){
+            if (hitPart != null)
+            {
                 hitParticles = hitPart.GetComponentInChildren<ParticleSystem>();
             }
             hitPart = GameObject.Find(spikePariclesName);
-            if (hitPart != null){
+            if (hitPart != null)
+            {
                 spikeParticles = hitPart.GetComponentInChildren<ParticleSystem>();
             }
             hitPart = GameObject.Find(successParticlesName);
@@ -193,7 +278,7 @@ namespace PronoesProMod
                         for (int c = 0; c < foundGO.transform.childCount; c++)
                         {
                             foundGO.GetChild(c).gameObject.AddComponent<DestructibleProp>();
-                            BouncingObject bounce= foundGO.GetChild(c).gameObject.AddComponent<BouncingObject>();
+                            BouncingObject bounce = foundGO.GetChild(c).gameObject.AddComponent<BouncingObject>();
                             if (hitParticles != null)
                             {
                                 bounce.particles = hitParticles;
@@ -215,21 +300,63 @@ namespace PronoesProMod
                     {
                         for (int child = 0; child < foundGO.childCount; child++)
                         {
-                            Lamp lamp= foundGO.GetChild(child).gameObject.AddComponent<Lamp>();
+                            Lamp lamp = foundGO.GetChild(child).gameObject.AddComponent<Lamp>();
                             if (spikeParticles != null)
                             {
                                 lamp.particles = spikeParticles;
                             }
                         }
                     }
-                    if(objNames[i].Contains("Basket"))// && appleAmmountsPerScene.ContainsKey(scene))
+                    if (objNames[i].Contains("Basket"))// && appleAmmountsPerScene.ContainsKey(scene))
                     {
-                        AppleBasket basket= foundGO.gameObject.AddComponent<AppleBasket>();
+                        AppleBasket basket = foundGO.gameObject.AddComponent<AppleBasket>();
                         basket.applesToReward = appleAmmountsPerScene[scene];
                         basket.correctParticles = successParticles;
                     }
+                    if (objNames[i].Contains("_points") && foundGO.childCount > 0)
+                    {
+                        int closestPoint = 0;
+                        List<GameObject> objs = new List<GameObject>();
+                        for (int obj = 0; obj < foundGO.childCount; obj++)
+                        {
+                            objs.Add(foundGO.GetChild(obj).gameObject);
+                            if (Vector2.Distance(objs[obj].transform.position, HeroController.instance.transform.position) < Vector2.Distance(objs[closestPoint].transform.position, HeroController.instance.transform.position))
+                            {
+                                closestPoint = obj;
+                            }
+                        }
+
+                        if (PronoesProMod.Instance.NPCBundle.ContainsKey("npcs") && PronoesProMod.Instance.NPCBundle["npcs"].Contains("dee_cart"))
+                        {
+                            GameObject cart = GameObject.Instantiate(PronoesProMod.Instance.NPCBundle["npcs"].LoadAsset<GameObject>("dee_cart"), objs[closestPoint].transform.position, Quaternion.identity);
+                            DeeTransportation transport = cart.AddComponent<DeeTransportation>();
+                            transport.points = objs.ToArray();
+                            transport.curPoint = closestPoint;
+                        }
+                    }
+
+                    if (foundGO.GetComponentInChildren<AudioSource>() != null)
+                    {
+                        foreach (AudioSource source in foundGO.GetComponentsInChildren<AudioSource>())
+                        {
+                            source.outputAudioMixerGroup = PronoesProMod.enviroMixer.outputAudioMixerGroup;
+                        }
+                    }
+                    if (foundGO.GetComponent<AudioSource>() != null)
+                    {
+                        foreach (AudioSource source in foundGO.GetComponents<AudioSource>())
+                        {
+                            source.outputAudioMixerGroup = PronoesProMod.enviroMixer.outputAudioMixerGroup;
+                        }
+                    }
                 }
             }
+        }
+
+        public void CreateTileMap()
+        {
+            PronoesProMod.InstanciatePreloaded("Tutorial_01", "TileMap");
+            PronoesProMod.InstanciatePreloaded("Tutorial_01", "TileMap Render Data");
         }
 
         public void LoadBlurPlane(Vector3 pos,Vector3 scale)
@@ -254,7 +381,7 @@ namespace PronoesProMod
             }
         }
 
-        public GameObject LoadCharacter(string type, Vector3 position)
+        public PronoCustomNPC LoadCharacter(string type, Vector3 position,string npcName)
         {
 
             if (PronoesProMod.Instance.NPCBundle.ContainsKey(type))
@@ -268,74 +395,13 @@ namespace PronoesProMod
                 go.AddComponent<PronoNPC>();
                 PronoCustomNPC customNPC= go.AddComponent<PronoCustomNPC>();
 
-                customNPC.npcSuperName = "The lost apprentice";
-                customNPC.npcName = "PronoesPro";
-                customNPC.npcSubName= "";
-                customNPC.conversation = new string[]
-                {
-                    "prono_welcome_0",
-                    "prono_welcome_1",
-                    "prono_welcome_2",
-                    "prono_welcome_3",
-                    "prono_welcome_4"
-                };
-
-                return go;
-            }
-
-            /*
-            if (PronoesProMod.Instance.NPCBundle.ContainsKey(type))
-            {
-                AssetBundle ab = PronoesProMod.Instance.NPCBundle[type];
-                GameObject go = Instantiate(ab.LoadAsset<GameObject>("Character"));
-                if (go != null)
-                {
-                    go.transform.SetPosition2D(position);
+                if (customNPC!=null && townNPCdialogs.ContainsKey(npcName)){
+                    customNPC.dialogs = townNPCdialogs[npcName];
                 }
-                go.AddComponent<PronoNPC>();
 
-                AddInvisibleZote(go.transform.position + new Vector3(0, -2.25f),4f,1f);
-
-                return go;
-            }*/
+                return customNPC;
+            }
             return null;
-        }
-
-        public void AddInvisibleZote(Vector3 position, float xScaleMult = 1, float yScaleMult = 1)
-        {
-            GameObject zote = GameObject.Instantiate(PronoesProMod.Instance.preloadedObjs["Town"]["_NPCs"]);
-            Transform newZote = zote.transform.Find("Zote Final Scene");
-            newZote = newZote.Find("Zote Final");
-            newZote.parent = null;
-            Destroy(zote);
-
-            newZote.transform.position = position;
-
-            newZote.GetComponent<AudioSource>().clip=null;
-            newZote.GetComponent<tk2dSprite>().enabled = false;
-
-            //GameObject.Destroy(newZote.GetComponent<tk2dSprite>());
-
-            BoxCollider2D col = newZote.GetComponent<BoxCollider2D>();
-            col.size = new Vector2(col.size.x * xScaleMult, col.size.y * yScaleMult);
-
-            DialogueNPC dnpc = newZote.gameObject.AddComponent<DialogueNPC>();
-            dnpc.NPC_TITLE = "Pronoespro";
-            dnpc.Dialogue = new string[] { "prono_welcome_0", "prono_welcome_1", "prono_welcome_2", "prono_welcome_3", "prono_welcome_4" };
-            dnpc.NPC_DREAM_KEY = "prono_dreamnail_0";
-            AssetBundle ab = PronoesProMod.Instance.soundBundle["sounds"];
-
-            dnpc.SingleClips = new System.Collections.Generic.Dictionary<string, AudioClip>()
-            {
-            };
-            dnpc.MultiClips = new System.Collections.Generic.Dictionary<string, AudioClip[]>
-            {
-                {"prono_welcome_0",new AudioClip[]{ ab.LoadAsset<AudioClip>("introPiano"), ab.LoadAsset<AudioClip>("introPiano"), ab.LoadAsset<AudioClip>("introPiano"), ab.LoadAsset<AudioClip>("introPiano"), ab.LoadAsset<AudioClip>("introPiano") } }
-            };
-            dnpc.DialogueSelector = (() => {
-                return "prono_welcome_0";
-            });
-            //dnpc.SetUp();
         }
 
         public IEnumerator ShowTitle(int titleType)
@@ -375,6 +441,34 @@ namespace PronoesProMod
             portal.AddComponent<NonBouncer>();
         }
 
+        public void CreateDoor(string name,Vector2 pos, Vector2 size, string destination, string gate,bool enterLeft, bool onlyOut, GameManager.SceneLoadVisualizations vis)
+        {
+            GameObject door = new GameObject(name);
+            door.transform.SetPosition2D(pos);
+            door.layer = LayerMask.NameToLayer("TransitionGate");
+
+            Door_Prono dp = door.AddComponent<Door_Prono>();
+
+            if (!onlyOut)
+            {
+                BoxCollider2D col = door.AddComponent<BoxCollider2D>();
+                col.size = size;
+                col.isTrigger = true;
+
+                dp.entryPoint = gate;
+                dp.targetScene = destination;
+            }
+
+            dp.sceneLoadVisualization = vis;
+
+            door.AddComponent<NonBouncer>();
+
+            GameObject rm = new GameObject("Hazard Respawn Marker");
+            rm.transform.SetPosition2D(rm.transform.position.x + (enterLeft ? 3f : -3f), rm.transform.position.y);
+            HazardRespawnMarker hrm = rm.AddComponent<HazardRespawnMarker>();
+
+        }
+
         public void CreateGateway(string gateName,Vector2 pos,Vector2 size,string toScene,string entryGate, bool left, bool onlyOut,GameManager.SceneLoadVisualizations vis)
         {
             GameObject gate = new GameObject(gateName);
@@ -398,6 +492,7 @@ namespace PronoesProMod
             rm.transform.parent = tp.transform;
             rm.transform.SetPosition2D(rm.transform.position.x + (left?3f:-3f), rm.transform.position.y);
             HazardRespawnMarker hrm = rm.AddComponent<HazardRespawnMarker>();
+
             tp.respawnMarker = hrm;
             tp.sceneLoadVisualization = vis;
 
@@ -405,28 +500,13 @@ namespace PronoesProMod
 
         private void SceneManager_Start(On.SceneManager.orig_Start orig, SceneManager self)
         {
-            scenesss = self;
-            if(scene== "Tutorial_01")
-            {
-                self.sceneType = GlobalEnums.SceneType.GAMEPLAY;
-                self.mapZone = GlobalEnums.MapZone.CROSSROADS;
-                self.darknessLevel = 1;
-                self.saturation = 1f;
-                self.ignorePlatformSaturationModifiers = false;
-                self.isWindy = true;
-                self.isTremorZone = false;
-                self.environmentType = 0;
-                self.noParticles = false;
-                self.overrideParticlesWith = GlobalEnums.MapZone.CROSSROADS;
-                self.defaultColor = new Color(0.5f, 0.5f, 0.5f);
-                self.defaultIntensity = 1f;
-                self.heroLightColor = Color.white;
-            }
+            orig(self);
+
             if (scene == "entrance")
             {
                 self.sceneType = GlobalEnums.SceneType.GAMEPLAY;
                 self.mapZone = GlobalEnums.MapZone.FINAL_BOSS;
-                self.darknessLevel = 50;
+                self.darknessLevel = 0;
                 self.saturation = 1f;
                 self.ignorePlatformSaturationModifiers = false;
                 self.isWindy = false;
@@ -438,8 +518,22 @@ namespace PronoesProMod
                 self.defaultIntensity = 15f;
                 self.heroLightColor = Color.white;
             }
-            else
-            if (scene == "CreatedTown")
+            else if (scene == "CreatedTown")
+            {
+                self.sceneType = GlobalEnums.SceneType.GAMEPLAY;
+                self.mapZone = GlobalEnums.MapZone.FINAL_BOSS;
+                self.darknessLevel = 0;
+                self.saturation = 1f;
+                self.ignorePlatformSaturationModifiers = false;
+                self.isWindy = true;
+                self.isTremorZone = false;
+                self.environmentType = 4;
+                self.noParticles = false;
+                self.overrideParticlesWith = GlobalEnums.MapZone.FINAL_BOSS;
+                self.defaultColor = new Color(1f, 0.8f, 0.8f);
+                self.defaultIntensity = 1f;
+                self.heroLightColor = Color.white;
+            }else if (scene == "appleminigame")
             {
                 self.sceneType = GlobalEnums.SceneType.GAMEPLAY;
                 self.mapZone = GlobalEnums.MapZone.FINAL_BOSS;
@@ -455,7 +549,6 @@ namespace PronoesProMod
                 self.defaultIntensity = 1f;
                 self.heroLightColor = Color.white;
             }
-            orig(self);
         }
 
     }

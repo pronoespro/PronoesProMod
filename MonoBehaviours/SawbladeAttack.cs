@@ -13,6 +13,7 @@ namespace PronoesProMod.MonoBehaviours
         public float destroyTime = 1f;
 
         public float collisionMult = 1f;
+        public int maxCollide = -1;
 
         public void Start()
         {
@@ -26,7 +27,7 @@ namespace PronoesProMod.MonoBehaviours
             Invoke("DisableProjectile", destroyTime);
 
             transform.position = HeroController.instance.transform.position;
-            if (anim != null)
+            if (anim != null && attackAnim.Length>0)
             {
                 anim.Play(attackAnim);
             }
@@ -34,11 +35,30 @@ namespace PronoesProMod.MonoBehaviours
             if (counters == null)
             {
                 counters = new List<SawbladeHitCounter>();
-                for (int i = 0; i < transform.childCount; i++)
+
+                for(int i = 0; i < transform.childCount; i++)
                 {
-                    SawbladeHitCounter counter = transform.GetChild(i).gameObject.AddComponent<SawbladeHitCounter>();
-                    counters.Add(counter);
-                    counter.collisionMult = collisionMult;
+                    if (transform.GetChild(i).GetComponent<Collider2D>() != null)
+                    {
+                        SawbladeHitCounter counter = transform.GetChild(i).gameObject.AddComponent<SawbladeHitCounter>();
+                        counters.Add(counter);
+                        counter.collisionMult = collisionMult;
+                        if (maxCollide > 0)
+                        {
+                            counter.collisionAmmount = maxCollide;
+                        }
+                    }else{
+                        for(int j = 0; j < transform.GetChild(i).childCount;j++)
+                        {
+                            SawbladeHitCounter counter = transform.GetChild(i).GetChild(j).gameObject.AddComponent<SawbladeHitCounter>();
+                            counters.Add(counter);
+                            counter.collisionMult = collisionMult;
+                            if (maxCollide > 0)
+                            {
+                                counter.collisionAmmount = maxCollide;
+                            }
+                        }
+                    }
                 }
             }
 

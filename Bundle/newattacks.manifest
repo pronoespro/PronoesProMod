@@ -1,9 +1,9 @@
 ManifestFileVersion: 0
-CRC: 803156452
+CRC: 1542704404
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 9d9c864263bf5fa22f725482ecb2ee29
+    Hash: cb0370ec4a2dfa6fb4c42ddea5625242
   TypeTreeHash:
     serializedVersion: 2
     Hash: 2f22617b4028db06ca73f7256a7b5c1f
@@ -55,6 +55,7 @@ Assets:
 - Assets/Prefavs/Attacks/NailAttack.prefab
 - Assets/Prefavs/Attacks/AppleSliceAttack.prefab
 - Assets/Prefavs/Attacks/FallingNails.prefab
+- Assets/Prefavs/Attacks/SawbladeShout.prefab
 - Assets/Prefavs/Attacks/Dee_explode.prefab
 - Assets/Prefavs/Attacks/GiantNail.prefab
 - Assets/Prefavs/Attacks/SawbladeAttack.prefab
