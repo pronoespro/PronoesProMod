@@ -30,4 +30,4 @@ And enjoy a peaceful time on this new, more relaxing expansion mod for Hollow Kn
 	-You are allowed to make mods to change how this mod works, just don't be mean about it... I have feelings after all :C
 	-Do not post NSFW art of my characters on SFW places, please (I don't care if you actually do nsfw, just be carefull where you submit it)
 
-	-IMPORTANT: The sawblade attack will probably break Soul Warior, I'm not fixing this for now as it's not important enough. Soul Warior can be cheesed all you want for all I care.
+####	-IMPORTANT: The sawblade attack will probably break Soul Warior, I'm not fixing this for now as it's not important enough. Soul Warior can be cheesed all you want for all I care.
