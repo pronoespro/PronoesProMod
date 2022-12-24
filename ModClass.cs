@@ -42,7 +42,7 @@ namespace PronoesProMod
         public bool hasSwordsSpell, hasShieldSpell, hasTeleportSpell;
         public int equipedSoulType, equipedDiveType, equipedShriekType;
 
-        public string[] spellNames = new string[] { "SawbladeAttack","NailAttack","AppleAttack","FallingNails","GiantNail", "ShootSawbladeAttack", "NailBarrage", "Dee_explode", "ApplePieSawblade", "AppleSliceAttack", "SawbladeShout" };
+        public string[] spellNames = new string[] { "SawbladeAttack","NailAttack","AppleAttack","FallingNails","GiantNail", "ShootSawbladeAttack", "NailBarrage", "Dee_explode", "ApplePieSawblade", "AppleSliceAttack", "SawbladeShout", "DeeExplosionParticles" };
         public Dictionary<string, GameObject> newSpells;
         public int[] spellUsedTimes;
         public int[] spellAmmount;
@@ -64,6 +64,7 @@ namespace PronoesProMod
 
         public string[] spellSpriteNames = new string[] { "icon_apple_shriek", "icon_apple_soul", "icon_apple_dive", "icon_def_dive", "icon_def_shriek", "icon_def_soul", "icon_nailmaster_dive", "icon_nailmaster_shriek", "icon_nailmaster_soul", "icon_sawblade_dive", "icon_sawblade_soul", "icon_sawblade_shriek", "icon_pro_soul" };
         public Dictionary<string, Sprite> spellSprites;
+        private bool proSkinUsing;
 
 
         public static string[] MeleeAttacks = new string[] { "Nail Attack" };
@@ -127,10 +128,14 @@ namespace PronoesProMod
         public void UnloadVariables()
         {
             fadedIn = false;
+
+            GameObject.Destroy(levelNameDisplay);
+            levelNameDisplay = null;
         }
 
         public void UnloadCharacterSpecificVariables()
         {
+
         }
 
         #endregion
@@ -147,7 +152,8 @@ namespace PronoesProMod
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
-            Unload();
+
+            upgradedCharms = new bool[5];
 
             Log("Initializing");
 
@@ -171,27 +177,31 @@ namespace PronoesProMod
             {
                 Log("---Audio Mixer: "+mix.name+"---");
             }*/
+
             enviroMixer = Resources.FindObjectsOfTypeAll<AudioMixer>().First(x => x.name == "EnviroEffects");
             musicMixer = Resources.FindObjectsOfTypeAll<AudioMixer>().First(x => x.name == "Music");
             actorsMixer = Resources.FindObjectsOfTypeAll<AudioMixer>().First(x => x.name == "Actors");
             atmosMixer = Resources.FindObjectsOfTypeAll<AudioMixer>().First(x => x.name == "Atmos");
             masterMixer = Resources.FindObjectsOfTypeAll<AudioMixer>().First(x => x.name == "Master");
+
         }
 
         public void Unload()
         {
+            preloadedObjs = null;
+
             UnloadMethods();
             UnloadBundles();
 
             UnloadFSM();
             UnloadVariables();
             RemoveSceneLoader();
+            upgradedCharms = null;
 
             UnloadUI();
 
             Instance = null;
 
-            enviroMixer = musicMixer = actorsMixer = atmosMixer = masterMixer = null;
         }
         #endregion
 
@@ -199,7 +209,6 @@ namespace PronoesProMod
         public void SetupBundles()
         {
 
-            upgradedCharms = new bool[5];
 
             SceneBundle = new Dictionary<string, AssetBundle>();
             GOBundle = new Dictionary<string, AssetBundle>();
@@ -258,11 +267,14 @@ namespace PronoesProMod
                 GOBundle.Clear();
                 NPCBundle.Clear();
                 soundBundle.Clear();
+                skinsBundle.Clear();
             }
+
             SceneBundle = null;
             GOBundle = null;
             NPCBundle = null;
             soundBundle = null;
+            skinsBundle = null;
         }
 
         public void RemoveSceneLoader()
@@ -285,8 +297,9 @@ namespace PronoesProMod
 
             ModHooks.AfterSavegameLoadHook += AfterSave;
             ModHooks.NewGameHook += NewGameStarting;
-            ModHooks.LanguageGetHook += LanguageGet;
             On.HeroController.Move += SetDirection;
+
+            ModHooks.LanguageGetHook += LanguageGet;
 
             ModHooks.HeroUpdateHook += TooglePowerMenu;
             On.GameManager.RefreshTilemapInfo += ModifyTilemapInfo;
@@ -299,6 +312,8 @@ namespace PronoesProMod
             ModHooks.AfterSavegameLoadHook -= AfterSave;
             ModHooks.NewGameHook -= NewGameStarting;
             On.HeroController.Move -= SetDirection;
+
+            ModHooks.LanguageGetHook -= LanguageGet;
 
             ModHooks.HeroUpdateHook -= TooglePowerMenu;
             On.GameManager.RefreshTilemapInfo -= ModifyTilemapInfo;
@@ -336,13 +351,20 @@ namespace PronoesProMod
 
         public void AddSceneLoader()
         {
-            GameManager.instance.gameObject.AddComponent<SceneLoader>();
-            Log("Added Scene Loader");
+            if (GameManager.instance.GetComponent<SceneLoader>()== null) {
+                GameManager.instance.gameObject.AddComponent<SceneLoader>();
+                Log("Added Scene Loader");
+            }
+        }
+
+        public static bool IsGamePaused()
+        {
+            return GameManager.instance.isPaused || GameManager.instance.inventoryFSM.GetBoolVariable("Open").Value;
         }
 
         public void TooglePowerMenu()
         {
-            if (PlayerData.instance.atBench && !GameManager.instance.isPaused && !GameManager.instance.inventoryFSM.GetBoolVariable("Open").Value)
+            if (PlayerData.instance.atBench && !IsGamePaused())
             {
                 if (spellChangeUI != null)
                 {
@@ -373,6 +395,11 @@ namespace PronoesProMod
             {
                 levelNameDisplay.transform.Find("DialogBox").SendMessage("ContinueConversation");
             }
+        }
+
+        public static bool HasCharm(int charmNum)
+        {
+            return PlayerData.instance.GetBool("equippedCharm_"+charmNum.ToString());
         }
 
         public void UpdateSpellUI()
@@ -518,6 +545,15 @@ namespace PronoesProMod
                 }
             }
         }
+
+        public void DestroySceneLoader()
+        {
+            SceneManager scene = GameManager.instance?.GetComponent<SceneManager>();
+            if (scene != null)
+            {
+                GameObject.Destroy(scene);
+            }
+        }
         #endregion
 
         #region Powers and Upgrades
@@ -532,6 +568,23 @@ namespace PronoesProMod
         {
             On.HeroController.Awake -= ReadySpells;
             On.HeroController.Update -= HeroController_Update;
+        }
+
+        public void SetKnightProSkin()
+        {
+            proSkinUsing = true;
+            tk2dSprite sprite = HeroController.instance.GetComponent<tk2dSprite>();
+            Texture s = sprite.GetCurrentSpriteDef().material.mainTexture, skin = null;
+
+            if (PronoesProMod.Instance.skinsBundle.ContainsKey("skins"))
+            {
+                skin = PronoesProMod.Instance.skinsBundle["skins"].LoadAsset<Texture>("Gen-Knight");
+            }
+            sprite.GetCurrentSpriteDef().material.mainTexture = skin;
+
+            PronoesProMod.Instance.LocalSaveData.proKnightSkin = true;
+
+            OnSaveLocal();
         }
 
         private static void ReadySpells(On.HeroController.orig_Awake orig, HeroController self)
@@ -553,7 +606,8 @@ namespace PronoesProMod
             Instance.CreateSpell(7, 3,self,ref Instance.newSpells);
             Instance.CreateSpell(8, 4,self,ref Instance.newSpells);
             Instance.CreateSpell(9, 20,self,ref Instance.newSpells);
-            Instance.CreateSpell(10, 1,self,ref Instance.newSpells);
+            Instance.CreateSpell(10, 2,self,ref Instance.newSpells);
+            Instance.CreateSpell(11, 2, self, ref Instance.newSpells);
 
         }
 
@@ -566,7 +620,9 @@ namespace PronoesProMod
             {
                 GameObject prefav = GOBundle["newattacks"].LoadAsset<GameObject>(spellNames[type]);
                 DamageEnemies dmg;
+                DamageHero heroDmg;
                 AppleAttack apple;
+
                 if (prefav != null)
                 {
                     spellAmmount[type] = ammount;
@@ -695,6 +751,8 @@ namespace PronoesProMod
 
                                 DeeExplosionAttack deexplosion = dmg.gameObject.AddComponent<DeeExplosionAttack>();
                                 deexplosion.rb = deexplosion.GetComponent<Rigidbody2D>();
+                                deexplosion.dissapearOnCollision = true;
+
                                 break;
                             case 8:
                                 deact = spell.AddComponent<DeactivateAfter>();
@@ -737,6 +795,25 @@ namespace PronoesProMod
                                     dmg.magnitudeMult = 1;
                                     saw.dmgs.Add(dmg);
                                 }
+                                break;
+                            case 11:
+                                dmg= spell.AddComponent<DamageEnemies>();
+                                dmg.attackType = AttackTypes.Spell;
+                                dmg.circleDirection = true;
+                                dmg.damageDealt = 15;
+                                dmg.ignoreInvuln = true;
+
+                                heroDmg= spell.AddComponent<DamageHero>();
+                                heroDmg.damageDealt = 1;
+                                heroDmg.shadowDashHazard = false;
+
+                                deact = spell.AddComponent<DeactivateAfter>();
+                                deact.timer = 0.75f;
+
+                                {
+                                    QuickExplosion explodies = spell.AddComponent<QuickExplosion>();
+                                }
+
                                 break;
                         }
                     }
@@ -1081,9 +1158,10 @@ namespace PronoesProMod
                             //createdSpell.GetComponent<AudioSource>().Play();
                             createdSpell.transform.GetChild(0).gameObject.SetActive(true);
                             createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
+                            createdSpell.transform.localScale = new Vector3(playerFaceLeft ? -1 : 1, 1, 1);
+
                             DeeExplosionAttack atk = createdSpell.transform.GetChild(0).GetComponent<DeeExplosionAttack>();
                             if (atk != null){
-                                atk.transform.localScale = new Vector3(playerFaceLeft ? -1 : 1, 1, 1);
                                 atk.ChangeMoveDir(new Vector2(playerFaceLeft ? 7f : -7f, 3f));
                                 atk.ResetAttack();
                             }
@@ -1300,10 +1378,13 @@ namespace PronoesProMod
 
         public void IncreaseCDashSpeed(PlayMakerFSM fsm)
         {
-            fsm.FsmVariables.FindFsmFloat("Charge Time").Value =(PlayerData.instance.GetBool("equippedCharm_31")?0.1f:0.8f);
-            fsm.FsmVariables.FindFsmFloat("Superdash Speed").Value = (PlayerData.instance.GetBool("equippedCharm_31") ? 75f : 30f);
-            fsm.FsmVariables.FindFsmFloat("Superdash Speed neg").Value =-fsm.FsmVariables.FindFsmFloat("Superdash Speed").Value;
-            fsm.FsmVariables.FindFsmFloat("Y Speed").Value = (PlayerData.instance.GetBool("equippedCharm_31") ? 13f : 0f);
+            if (upgradedCharms[0])
+            {
+                fsm.FsmVariables.FindFsmFloat("Charge Time").Value = (PlayerData.instance.GetBool("equippedCharm_31") ? 0.1f : 0.8f);
+                fsm.FsmVariables.FindFsmFloat("Superdash Speed").Value = (PlayerData.instance.GetBool("equippedCharm_31") ? 75f : 30f);
+                fsm.FsmVariables.FindFsmFloat("Superdash Speed neg").Value = -fsm.FsmVariables.FindFsmFloat("Superdash Speed").Value;
+                fsm.FsmVariables.FindFsmFloat("Y Speed").Value = (PlayerData.instance.GetBool("equippedCharm_31") ? 13f : 0f);
+            }
         }
         #endregion
 
@@ -1329,6 +1410,7 @@ namespace PronoesProMod
                   LocalSaveData.hasSwordsSpell = hasSwordsSpell;
                   LocalSaveData.hasTeleportSpell = hasTeleportSpell;
 
+                  LocalSaveData.proKnightSkin =proSkinUsing;
               };
         }
 
@@ -1434,6 +1516,37 @@ namespace PronoesProMod
             }
         }
 
+        public void ChangeDialogEvents(UnityEvent start,UnityEvent next, UnityEvent end)
+        {
+            if (levelNameDisplay != null) {
+                Transform box = levelNameDisplay.transform.Find("DialogBox");
+                DialogBox dialBox = box.GetComponent<DialogBox>();
+
+                if (dialBox != null)
+                {
+                    if (start!=null) {
+                        dialBox.onConversationStart.AddListener(start.Invoke);
+                    }else{
+                        dialBox.onConversationStart.RemoveAllListeners();
+                    }
+
+                    if (next!=null)
+                    {
+                        dialBox.onConversationContinue.AddListener(next.Invoke);
+                    }else{
+                        dialBox.onConversationContinue.RemoveAllListeners();
+                    }
+
+                    if (end != null)
+                    {
+                        dialBox.onConversationEnd.AddListener( end.Invoke);
+                    }else{
+                        dialBox.onConversationEnd.RemoveAllListeners();
+                    }
+                }
+            }
+        }
+
         public void StartInteraction(Vector2 pos,string prompt)
         {
             if (interactionPropt != null)
@@ -1445,35 +1558,26 @@ namespace PronoesProMod
 
         public void EndInteraction()
         {
-            interactionPropt.EndInteractable();
+            if (interactionPropt != null)
+            {
+                interactionPropt.EndInteractable();
+            }
         }
 
-        public void ChangeDialogEvents(UnityEvent start,UnityEvent next, UnityEvent end)
+        public static bool IsMidDialog()
         {
-            if (levelNameDisplay != null) {
-                Transform box = levelNameDisplay.transform.Find("DialogBox");
-                DialogBox dialBox = box.GetComponent<DialogBox>();
-                if (dialBox != null)
-                {
-                    if (start!=null) {
-                        dialBox.onConversationStart = start;
-                    }else{
-                        dialBox.onConversationStart.RemoveAllListeners();
-                    }
-
-                    if (next!=null) {
-                        dialBox.onConversationContinue= next;
-                    }else{
-                        dialBox.onConversationContinue.RemoveAllListeners();
-                    }
-
-                    if (start!=null) {
-                        dialBox.onConversationEnd= end;
-                    }else{
-                        dialBox.onConversationEnd.RemoveAllListeners();
+            if (levelNameDisplay!=null)
+            {
+                Transform dialogTrans = levelNameDisplay.transform.Find("DialogBox");
+                if (dialogTrans != null){
+                    DialogBox box = dialogTrans.GetComponent<DialogBox>();
+                    if (box != null)
+                    {
+                        return box.IsMidDialog;
                     }
                 }
             }
+            return false;
         }
 
         public void CustomSceneFadeInsis()
@@ -1550,9 +1654,16 @@ namespace PronoesProMod
                 return gottenValue;
             }
 
-            if(key== "CHARM_DESC_31" && PlayerData.instance.hasSuperDash)
+            if(upgradedCharms[0] )
             {
-                return "Bears the likeness of an eccentric bug known only as The Dashmaster. The bearer will be able to dash more often and even downwards, and crystal dash will charge faster. Perfect for those who want to move around as quickly as possible.";
+                if (key == "CHARM_DESC_31" && LanguageData.englishSentences.ContainsKey("DashmasterUpgrade_Desc"))
+                {
+                    return LanguageData.englishSentences["DashmasterUpgrade_Desc"];
+                }
+                if(key=="CHARM_NAME_31" && LanguageData.englishSentences.ContainsKey("DashmasterUpgrade_Name"))
+                {
+                    return LanguageData.englishSentences["DashmasterUpgrade_Name"];
+                }
             }
 
 
@@ -1646,6 +1757,8 @@ namespace PronoesProMod
     {
         public bool hasSwordsSpell, hasShieldSpell, hasTeleportSpell;
         public int equipedSouls, equipedShriek, equipedQuake;
+
+        public bool proKnightSkin;
     }
     #endregion
 

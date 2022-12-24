@@ -17,12 +17,13 @@ namespace PronoesProMod.MonoBehaviours
         public string[] conversation;
         public string[] dialogSounds;
         public string interactionPrompt = "Interact";
+        public string[] requirements;
 
         public float dialogSpeed = 2;
         public UnityEvent onStart, onContinue, onEnd;
 
-        public DialogSettings(LayerMask collisionMask,  string[] dialog,string[] sounds, string name="", string superName="", string subName="", float speed=2f, bool startOnCollision=false,bool nextWhenFinished=true,
-            UnityEvent onStartConversation=null, UnityEvent onContinueConversation=null, UnityEvent onEndConversation=null,string inteactionDisplay="Interact")
+        public DialogSettings(LayerMask collisionMask, string[] dialog, string[] sounds, string name = "", string superName = "", string subName = "", float speed = 2f, bool startOnCollision = false, bool nextWhenFinished = true,
+            UnityEvent onStartConversation = null, UnityEvent onContinueConversation = null, UnityEvent onEndConversation = null, string inteactionDisplay = "Interact", string[] dialogRequirements = null)
         {
             mask = collisionMask;
 
@@ -36,12 +37,12 @@ namespace PronoesProMod.MonoBehaviours
 
             dialogSpeed = speed;
 
-            onStart = (onStartConversation!=null)?onStartConversation:new UnityEvent();
+            onStart = (onStartConversation != null) ? onStartConversation : new UnityEvent();
             onContinue = (onContinueConversation != null) ? onContinueConversation : new UnityEvent();
             onEnd = (onEndConversation != null) ? onEndConversation : new UnityEvent();
 
             interactionPrompt = inteactionDisplay;
-
+            requirements = dialogRequirements;
         }
 
         public static LayerMask GetDefaultMask()
@@ -62,15 +63,72 @@ namespace PronoesProMod.MonoBehaviours
         public void SetDialogSettings(DialogSettings[] npcDialog)
         {
             dialogs = npcDialog;
+            PronoesProMod.Instance.Log("Added dialogs");
+
+            for(int i = 0; i < dialogs.Length; i++){
+                if (dialogs[i].nextDialogOnFinish){
+                    dialogs[i].onEnd.AddListener(() => NextDialog());
+                    PronoesProMod.Instance.Log("Added dialog continuing to "+i.ToString());
+                }
+            }
         }
 
         public DialogSettings GetCurrentSettings()
         { 
             if (dialogs.Length > 0)
             {
+                for(int i = 0; i < dialogs.Length; i++)
+                {
+                    if (dialogs[i].requirements!=null){
+                        if (RequirementsMet(dialogs[i].requirements)){
+                            return dialogs[i];
+                        }
+                    }else{
+                        return dialogs[i];
+                    }
+                }
                 return dialogs[0];
             }
             return null;
+        }
+
+        public bool RequirementsMet(string[] requirements)
+        {
+            for(int i = 0; i < requirements.Length; i++) {
+
+                if (requirements[i].Contains(":"))
+                {
+                    string[] splitRequirement = requirements[i].Split(':');
+                    int requiredNum;
+
+                    if(int.TryParse(splitRequirement[1],out requiredNum)){
+                        switch (splitRequirement[0].ToLower())
+                        {
+                            default:
+                                break;
+                            case "charm":
+                                if (!PronoesProMod.HasCharm(requiredNum))
+                                {
+                                    return false;
+                                }
+                                break;
+                            case "hp-more":
+                                if (PlayerData.instance.GetInt("HP")<requiredNum)
+                                {
+                                    return false;
+                                }
+                                break;
+                            case "hp-less":
+                                if (PlayerData.instance.GetInt("HP")>requiredNum)
+                                {
+                                    return false;
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+            return true;
         }
 
         public void NextDialog()
@@ -86,6 +144,7 @@ namespace PronoesProMod.MonoBehaviours
             }else{
                 dialogs = new DialogSettings[0];
             }
+            PronoesProMod.Instance.Log("New dialog ammount is: "+dialogs.Length);
         }
 
         public void OnTriggerEnter2D(Collider2D collider)
@@ -93,23 +152,19 @@ namespace PronoesProMod.MonoBehaviours
             DialogSettings dialog = GetCurrentSettings();
             if (dialog != null)
             {
-                if (dialog.onCollision)
+                if (dialog.mask == (dialog.mask | (1 << collider.gameObject.layer)))
                 {
-                    if (dialog.mask == (dialog.mask | (1 << collider.gameObject.layer)))
+                    if (dialog.onCollision)
                     {
                         PronoesProMod.Instance.ShowDialogBox(dialog.npcSuperName, dialog.npcName, dialog.npcSubName, dialog.conversation, dialog.dialogSounds, dialog.dialogSpeed);
                         PronoesProMod.Instance.ChangeDialogEvents(dialog.onStart, dialog.onContinue, dialog.onEnd);
                     }
-                }else{
-                    if (SceneLoader.interactionPrompt != null)
+                    else
                     {
-                        SceneLoader.interactionPrompt.position = new Vector3(transform.position.x, transform.position.y, SceneLoader.interactionPrompt.position.z);
-
-                        Animator anim = SceneLoader.interactionPrompt.GetComponentInChildren<Animator>();
-                        if (anim != null)
+                        if (PronoesProMod.Instance.interactionPropt != null)
                         {
-                            anim.SetBool("Appear", true);
-                            PronoesProMod.Instance.Log("Interaction ready!");
+                            PronoesProMod.Instance.StartInteraction(new Vector3(transform.position.x, transform.position.y, PronoesProMod.Instance.interactionPropt.transform.position.z), dialog.interactionPrompt);
+                            PronoesProMod.Instance.ChangeDialogEvents(dialog.onStart, dialog.onContinue, dialog.onEnd);
                         }
                     }
                 }
@@ -119,13 +174,12 @@ namespace PronoesProMod.MonoBehaviours
         public void OnTriggerStay2D(Collider2D collider)
         {
             DialogSettings dialog = GetCurrentSettings();
-            if (dialog != null)
-            {
+            if (dialog != null && !PronoesProMod.IsMidDialog()){
                 if (dialog.mask == (dialog.mask | (1 << collider.gameObject.layer)) && !dialog.onCollision)
                 {
-                    PronoesProMod.Instance.StartInteraction(transform.position, dialog.interactionPrompt);
+                    PronoesProMod.Instance.StartInteraction(new Vector3(transform.position.x,transform.position.y,PronoesProMod.Instance.interactionPropt.transform.position.z), dialog.interactionPrompt);
 
-                    if (InputHandler.Instance.inputActions.up.IsPressed)
+                    if (InputHandler.Instance.inputActions.up.IsPressed && !PronoesProMod.IsGamePaused())
                     {
                         PronoesProMod.Instance.ShowDialogBox(dialog.npcSuperName, dialog.npcName, dialog.npcSubName, dialog.conversation, dialog.dialogSounds, dialog.dialogSpeed);
                         PronoesProMod.Instance.ChangeDialogEvents(dialog.onStart, dialog.onContinue, dialog.onEnd);
@@ -136,13 +190,13 @@ namespace PronoesProMod.MonoBehaviours
 
         public void OnTriggerExit2D(Collider2D collider){
 
-            if (collider.transform == HeroController.instance.transform)
+            DialogSettings dialog = GetCurrentSettings();
+            if (dialog != null)
             {
-                Animator anim = SceneLoader.interactionPrompt.GetComponentInChildren<Animator>();
-                if (anim != null)
+                if (dialog.mask == (dialog.mask | (1 << collider.gameObject.layer)) && !dialog.onCollision)
                 {
-                    anim.SetBool("Appear", false);
-                    PronoesProMod.Instance.Log("Interaction ended!");
+                    PronoesProMod.Instance.EndInteraction();
+                    PronoesProMod.Instance.ChangeDialogEvents(null, null, null);
                 }
             }
         }

@@ -76,7 +76,7 @@ namespace PronoesProMod.MonoBehaviours
 
         public IEnumerator ShowDialog(float conversationSpeed= 1f)
         {
-            PronoesProMod.Instance.upgradedCharms[0] = true;
+
             HeroController.instance.SendMessage("RelinquishControl");
             HeroController.instance.SendMessage("StopAnimationControl");
 
@@ -96,18 +96,9 @@ namespace PronoesProMod.MonoBehaviours
             HeroController.instance.SendMessage("RelinquishControl");
             HeroController.instance.SendMessage("StopAnimationControl");
 
-            tk2dSprite sprite = HeroController.instance.GetComponent<tk2dSprite>();
-            Texture s = sprite.GetCurrentSpriteDef().material.mainTexture,skin=null;
-
-            if (PronoesProMod.Instance.skinsBundle.ContainsKey("skins"))
-            {
-                 skin=PronoesProMod.Instance.skinsBundle["skins"].LoadAsset<Texture>("Gen-Knight");
-            }
-            sprite.GetCurrentSpriteDef().material.mainTexture = skin;
-            
-
             HeroController.instance.GetComponent<tk2dSpriteAnimator>().Play("Idle");
 
+            PronoesProMod.Instance.Log("Calling conversation start!");
             onConversationStart.Invoke();
 
             PlayerData.instance.SetBool("disablePause", true);
@@ -122,6 +113,10 @@ namespace PronoesProMod.MonoBehaviours
             int soundNum = 0;
             while (curConversation.Count > 0)
             {
+                while (PronoesProMod.IsGamePaused())
+                {
+                    yield return null;
+                }
                 continueConv = false;
                 if (LanguageData.englishSentences.ContainsKey(curConversation[0]))
                 {
@@ -167,10 +162,9 @@ namespace PronoesProMod.MonoBehaviours
                     {
                         yield return null;
                     }
-                    if (curConversation.Count > 0)
-                    {
-                        onConversationContinue.Invoke();
-                    }
+
+                    PronoesProMod.Instance.Log("Calling conversation continue!");
+                    onConversationContinue.Invoke();
                 }
                 else
                 {
@@ -180,7 +174,6 @@ namespace PronoesProMod.MonoBehaviours
                 anim.SetBool("ShowCursor", false);
             }
 
-            onConversationEnd.Invoke();
 
             dialogTxt.text = "";
             nameTxt.text = "";
@@ -188,6 +181,9 @@ namespace PronoesProMod.MonoBehaviours
             nameSuperTxt.text = "";
 
             anim.SetBool("ShowDialog", false);
+
+            PronoesProMod.Instance.Log("Calling conversation end!");
+            onConversationEnd.Invoke();
             
             yield return new WaitForSeconds(0.25f);
 

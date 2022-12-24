@@ -11,6 +11,10 @@ namespace PronoesProMod
 
         public static Dictionary<string, string> englishSentences = new Dictionary<string, string>()
         {
+
+            //NPCs
+
+            //1: PRO
             {"Pronoespro_MAIN","Pronoespro" },
             {"Pronoespro_SUPER","Forgotten dreamer" },
             {"Pronoespro_SUB","or Prono/Pro to his friends" },
@@ -19,6 +23,9 @@ namespace PronoesProMod
             {"prono_welcome_2","Me and my partner here wanted to help you in your journey" },
             {"prono_welcome_3","If you need anything, be not afraid to ask" },
             {"prono_welcome_4","" },
+            {"prono_upgrade_charm_dash_0","Oh, look at that charm! 'Dashmaster', right?" },
+            {"prono_upgrade_charm_dash_1","Let me upgrade it for you, so you can explore with more ease" },
+            {"prono_upgrade_charm_dash_2","OK, now it's done. Have fun dashing around with it!" },
             {"prono_dreamnail_0","What a wonderfull tool, wish I had something interesting to say." },
 
             //Interactables
@@ -28,6 +35,7 @@ namespace PronoesProMod
 
             //Spells
 
+            //1: Souls
             {"Soul_sawblade_0","Help of Sawblades" },
             {"Soul_sawblade_0_desc","Summon a sawblade that sticks to walls and shreds your foes.\n \nRequires SOUL to conjure, strike enemies to gather SOUL." },
             
@@ -52,7 +60,7 @@ namespace PronoesProMod
             {"Soul_Dee_1","Dee-Big explosion" },
             {"Soul_Dee_1_desc","Summon a Dee clone to explode on your enemies.\n \nRequires SOUL to conjure, strike enemies to gather SOUL."},
 
-
+            //2: Dives
             {"Dive_sawblade_0","Sawblade's Begining" },
             {"Dive_sawblade_0_desc","Creates two sawblades to shred your enemies when you hit the ground.\n \nRequires SOUL to conjure, strike enemies to gather SOUL." },
 
@@ -71,6 +79,7 @@ namespace PronoesProMod
             {"Dive_apple_1","Gravity Rush"},
             {"Dive_apple_1_desc","Because an apple fell on a guy's head, and that's gravity and this is...\n \nRequires SOUL to conjure, strike enemies to gather SOUL."},
 
+            //3: Shriek
             {"Shriek_sawblade_0","Sawblade's Lament" },
             {"Shriek_sawblade_0_desc","Creates sawblades I guess...?\n \nRequires SOUL to conjure, strike enemies to gather SOUL." },
 
@@ -87,7 +96,13 @@ namespace PronoesProMod
             {"Shriek_apple_0_desc","Summon an apple that can be hit towards enemies.\n \nRequires SOUL to conjure, strike enemies to gather SOUL." },
 
             {"Shriek_apple_1","Aplple's Summoning" },
-            {"Shriek_apple_1_desc","Summon a big apple that can be send flying towards enemies.\n \nRequires SOUL to conjure, strike enemies to gather SOUL." }
+            {"Shriek_apple_1_desc","Summon a big apple that can be send flying towards enemies.\n \nRequires SOUL to conjure, strike enemies to gather SOUL." },
+
+            //Upgrades
+
+            //1: Dashmaster
+            {"DashmasterUpgrade_Name","Upgraded Dashmaster" },
+            {"DashmasterUpgrade_Desc","Bears the likeness of an eccentric bug known only as 'The Dashmaster', but even weirder.\n\nThe bearer will be able to dash more often and slightly tilted up or directly downwards, and crystal dash will charge faster. Perfect for those who want to move around at the speed of sound!" }
         };
 
     }

@@ -1,15 +1,17 @@
 ManifestFileVersion: 0
-CRC: 4094376917
+CRC: 2000686255
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0b9f0a04d010a72a3a34b6dc77d33786
+    Hash: 3d59fcc6a26dc9f6021f839be0211037
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 06f5a77804ba3c77035aa89d3c83cb3b
+    Hash: fc8ace4b2a7a1c1bd428054fc0aee3c2
 HashAppended: 0
 ClassTypes:
 - Class: 1
+  Script: {instanceID: 0}
+- Class: 4
   Script: {instanceID: 0}
 - Class: 21
   Script: {instanceID: 0}
@@ -23,8 +25,6 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 95
   Script: {instanceID: 0}
-- Class: 114
-  Script: {fileID: 1392445389, guid: f70555f144d8491a825f0804e09c671c, type: 3}
 - Class: 114
   Script: {fileID: 1980459831, guid: f70555f144d8491a825f0804e09c671c, type: 3}
 - Class: 114
@@ -57,6 +57,7 @@ Assets:
 - Assets/Sprites/Icons/icon_nailmaster_shriek.png
 - Assets/Sprites/Icons/icon_nailmaster_soul.png
 - Assets/Sprites/Icons/icon_def_soul.png
+- Assets/Prefavs/InteractPrompt.prefab
 - Assets/Sprites/Icons/icon_def_shriek.png
 - Assets/Sprites/Icons/icon_sawblade_soul.png
 - Assets/Sprites/Icons/icon_sawblade_dive.png
@@ -66,6 +67,5 @@ Assets:
 - Assets/Prefavs/UI.prefab
 - Assets/Sprites/Icons/icon_nailmaster_dive.png
 - Assets/Sprites/Icons/icon_apple_shriek.png
-- Assets/Prefavs/MenuUI.prefab
 - Assets/Sprites/Icons/icon_def_dive.png
 Dependencies: []

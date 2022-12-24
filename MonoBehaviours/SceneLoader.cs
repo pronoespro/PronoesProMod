@@ -11,13 +11,19 @@ namespace PronoesProMod
 
         string scene;
 
+        //Entrance
         public string[] entranceGOs = new string []{ "Portal", "GroundObjs", "Ground","crates_d", "Background", "Spikes_spk" };
+        //Town
         public string[] townGOs = new string[] { "TownGround","Decorations", "crates_d", "NoBounce_nb", "Spikes_spk","Lamps_l", "Basket", "DeeCart_points", "Temple", "ultimate bench" };
         public DialogPromptInteractableObject[] townInteractables = new DialogPromptInteractableObject[] { new DialogPromptInteractableObject("ultimate bench", new string[] { "UltimateBench1", "UltimateBench2" },new string[] { ""},"Rest")};
-        public Dictionary<string, DialogSettings[]> townNPCdialogs = new Dictionary<string, DialogSettings[]> { 
-            {"Pro", new DialogSettings[] { new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_welcome_0", "prono_welcome_1", "prono_welcome_2" }, new string[] { "kahmo", "sigh bapa nara_hk", "bla iss_gravity rush" }, "Pronoespro_MAIN", "Pronoespro_SUB", "Pronoespro_SUPER", 2f,true,true ),
-                new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_welcome_3" }, new string[] { "kahmo", "sigh bapa nara_hk", "bla iss_gravity rush" }, "Pronoespro_MAIN", "Pronoespro_SUPER", "Pronoespro_SUB", 2f,false,true)} } };
+        public Dictionary<string, DialogSettings[]> townNPCdialogs = new Dictionary<string, DialogSettings[]> {
+            {"Pro", new DialogSettings[] { new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_welcome_0", "prono_welcome_1", "prono_welcome_2" }, new string[] { "kahmo"}, "Pronoespro_MAIN", "Pronoespro_SUB", "Pronoespro_SUPER", 2f,true,true,inteactionDisplay:"Talk" ),
+                new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_upgrade_charm_dash_0","prono_upgrade_charm_dash_1","prono_upgrade_charm_dash_2" }, new string[] { "kahmo" }, "Pronoespro_MAIN", "Pronoespro_SUPER", "Pronoespro_SUB", 4f,false,true,dialogRequirements:new string[]{ "Charm:31"},inteactionDisplay:"Talk"),
+                new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_welcome_3" }, new string[] { "kahmo" }, "Pronoespro_MAIN", "Pronoespro_SUPER", "Pronoespro_SUB", 2.5f,false,false,inteactionDisplay:"Talk") } }};
+        //Apple minigame
         public string[] appleMiniGOs = new string[] { "EntranceWalls", "Objects" };
+        
+        //General
         public string hitParticlesName = "Bounce_hit",spikePariclesName = "Spike_hit",successParticlesName="Success";
         public ParticleSystem hitParticles,spikeParticles,successParticles;
         public static Transform interactionPrompt;
@@ -28,6 +34,12 @@ namespace PronoesProMod
         {
             On.GameManager.EnterHero += GameManager_EnterHero;
             On.SceneManager.Start += SceneManager_Start;
+        }
+
+        public void OnDestroy()
+        {
+            On.GameManager.EnterHero -= GameManager_EnterHero;
+            On.SceneManager.Start -= SceneManager_Start;
         }
 
         public static void DreamTransition(string toScene,string entry)
@@ -46,43 +58,49 @@ namespace PronoesProMod
             AssetBundle ab = PronoesProMod.Instance.GOBundle["ui"];
             if (ab.Contains("UI"))
             {
-                interactionPrompt = GameObject.Instantiate<GameObject>(ab.LoadAsset<GameObject>("InteractionPrompts")).transform;
+                interactionPrompt = GameObject.Instantiate(ab.LoadAsset<GameObject>("InteractPrompt"),new Vector3(0,0,-1),Quaternion.identity).transform;
+                interactionPrompt.gameObject.AddComponent<InteractionPrompt>();
+                PronoesProMod.Instance.interactionPropt = interactionPrompt.GetComponent<InteractionPrompt>();
             }
         }
 
         private void GameManager_EnterHero(On.GameManager.orig_EnterHero orig, GameManager self, bool additiveGateSearch)
         {
+
             scene = self.sceneName;
 
-            if (self.sceneName == "Tutorial_01")
+            if (self!=null && self.sceneName == "Tutorial_01")
             {
-                CreateGateway("left", new Vector2(36.5f, 17f), new Vector2(17f, 2f), "entrance", "left", false, true, GameManager.SceneLoadVisualizations.Dream);
+                if (PlayerData.instance.hasDreamNail)
+                { 
+                    CreateGateway("left", new Vector2(36.5f, 17f), new Vector2(17f, 2f), "entrance", "left", false, true, GameManager.SceneLoadVisualizations.Dream);
 
-                if (PronoesProMod.Instance.GOBundle.ContainsKey("portal"))
-                {
-                    AssetBundle ab = PronoesProMod.Instance.GOBundle["portal"];
-                    GameObject go = Instantiate(ab.LoadAsset<GameObject>("Portal"));
-                    go.SetActive(PlayerData.instance.hasDreamNail);
-                    go.transform.position = new Vector3(36.5f, 17f, 2f);
-                    foreach (SpriteRenderer rend in go.GetComponentsInChildren<SpriteRenderer>())
+                    if (PronoesProMod.Instance.GOBundle.ContainsKey("portal"))
                     {
-                        rend.material = new Material(Shader.Find("Sprites/Default"));
-                    }
+                        AssetBundle ab = PronoesProMod.Instance.GOBundle["portal"];
+                        GameObject go = Instantiate(ab.LoadAsset<GameObject>("Portal"));
+                        go.SetActive(PlayerData.instance.hasDreamNail);
+                        go.transform.position = new Vector3(36.5f, 17f, 2f);
+                        foreach (SpriteRenderer rend in go.GetComponentsInChildren<SpriteRenderer>())
+                        {
+                            rend.material = new Material(Shader.Find("Sprites/Default"));
+                        }
 
-                    ParticleSystem particles = go.transform.Find("DreamEntering").GetComponent<ParticleSystem>();
+                        ParticleSystem particles = go.transform.Find("DreamEntering").GetComponent<ParticleSystem>();
 
-                    if (particles != null)
-                    {
-                        CreateDreamNailPortal(new Vector2(36.25f, 12.25f), new Vector2(4.1f, 4.5f), "entrance", "left", particles);
+                        if (particles != null)
+                        {
+                            CreateDreamNailPortal(new Vector2(36.25f, 12.25f), new Vector2(4.1f, 4.5f), "entrance", "left", particles);
+                        }
+                        else
+                        {
+                            CreateDreamNailPortal(new Vector2(36.25f, 12.25f), new Vector2(4.1f, 4.5f), "entrance", "left");
+                        }
                     }
                     else
                     {
-                        CreateDreamNailPortal(new Vector2(36.25f, 12.25f), new Vector2(4.1f, 4.5f), "entrance", "left");
+                        PronoesProMod.Instance.Log("Error loading Portal, try Portal 2 instead");
                     }
-                }
-                else
-                {
-                    PronoesProMod.Instance.Log("Error loading Portal, try Portal 2 instead");
                 }
             }
             else if (self.sceneName == "entrance")
@@ -136,14 +154,28 @@ namespace PronoesProMod
                 CreateGateway("left", new Vector2(1, 16), new Vector2(4, 8), "entrance", "right", false, false, GameManager.SceneLoadVisualizations.Default);
                 
                 PronoCustomNPC pro= LoadCharacter("npcs", new Vector3(105,13.75f,1),"Pro");
+
                 if (pro != null){
-                    pro.dialogs[0].onEnd.AddListener(() => NextDialogOfNPC(pro));
+                    //pro.dialogs[0].onEnd.AddListener(() => NextDialogOfNPC(pro));
+
+                    pro.dialogs[1].onEnd.AddListener(() => UpgradeCharm(0));
+                    PronoesProMod.Instance.Log("Added charm upgrade OwO");
+
+                    pro.dialogs[2].onEnd.AddListener(() => SetProKnightSkin());
+                    pro.dialogs[2].onEnd.AddListener(() => SetProKnightSkin());
+                    PronoesProMod.Instance.Log("Added costume upgrade! YAY!");
+                    //pro.dialogs[1].onStart.AddListener(() => NextDialogOfNPC(pro));
                 }
 
                 //CreateGateway("right",new Vector2(271, 10.28f), new Vector2(5, 1), "appleminigame", "right", true,false,GameManager.SceneLoadVisualizations.Default);
 
                 LoadObjects(townGOs);
                 LoadInteractables(townInteractables);
+
+                if (PronoesProMod.Instance.GOBundle == null)
+                {
+                    PronoesProMod.Instance.Log("No GOBundle");
+                }
 
                 if (PronoesProMod.Instance.GOBundle.ContainsKey("music"))
                 {
@@ -156,6 +188,7 @@ namespace PronoesProMod
             }
             else if (self.sceneName== "appleminigame")
             {
+                PronoesProMod.Instance.Log("Started creating minigame");
                 if (PronoesProMod.Instance.preloadedObjs.ContainsKey("Tutorial_01") && PronoesProMod.Instance.preloadedObjs["Tutorial_01"].ContainsKey("_SceneManager"))
                 {
                     GameObject go = GameObject.Instantiate(PronoesProMod.Instance.preloadedObjs["Tutorial_01"]["_SceneManager"]);
@@ -173,18 +206,15 @@ namespace PronoesProMod
                     MusicChanger.PlayBackgroundMusicForScene(clip);
                 }
 
+                PronoesProMod.Instance.Log("Should have finished loading...");
                 //StartCoroutine(ShowTitle(2));
             }
             if (PronoesProMod.Instance != null && PronoesProMod.Instance.fadedIn)
             {
                 PronoesProMod.Instance.CustomSceneFadeOutsis();
+                PronoesProMod.Instance.Log("Fading out in " + scene + "!");
             }
             orig(self,additiveGateSearch);
-        }
-
-        public void NextDialogOfNPC(PronoCustomNPC npc)
-        {
-            npc.NextDialog();
         }
 
         public void LoadInteractables(DialogPromptInteractableObject[] interactables)
@@ -353,6 +383,32 @@ namespace PronoesProMod
             }
         }
 
+        public PronoCustomNPC LoadCharacter(string type, Vector3 position, string npcName)
+        {
+
+            if (PronoesProMod.Instance.NPCBundle.ContainsKey(type))
+            {
+                AssetBundle ab = PronoesProMod.Instance.NPCBundle[type];
+                GameObject go = Instantiate(ab.LoadAsset<GameObject>("Character"));
+                if (go != null)
+                {
+                    go.transform.SetPosition2D(position);
+                }
+                go.AddComponent<PronoNPC>();
+                PronoCustomNPC customNPC = go.AddComponent<PronoCustomNPC>();
+
+                if (customNPC!=null && townNPCdialogs.ContainsKey(npcName))
+                {
+                    customNPC.SetDialogSettings(townNPCdialogs[npcName]);
+                }else{
+                    PronoesProMod.Instance.Log("Failed adding dialog");
+                }
+
+                return customNPC;
+            }
+            return null;
+        }
+
         public void CreateTileMap()
         {
             PronoesProMod.InstanciatePreloaded("Tutorial_01", "TileMap");
@@ -381,27 +437,20 @@ namespace PronoesProMod
             }
         }
 
-        public PronoCustomNPC LoadCharacter(string type, Vector3 position,string npcName)
+        public void NextDialogOfNPC(PronoCustomNPC npc)
         {
+            npc.NextDialog();
+            PronoesProMod.Instance.Log("Next Dialog!");
+        }
 
-            if (PronoesProMod.Instance.NPCBundle.ContainsKey(type))
-            {
-                AssetBundle ab = PronoesProMod.Instance.NPCBundle[type];
-                GameObject go = Instantiate(ab.LoadAsset<GameObject>("Character"));
-                if (go != null)
-                {
-                    go.transform.SetPosition2D(position);
-                }
-                go.AddComponent<PronoNPC>();
-                PronoCustomNPC customNPC= go.AddComponent<PronoCustomNPC>();
+        public void UpgradeCharm(int charmNum)
+        {
+            PronoesProMod.Instance.upgradedCharms[charmNum] = true;
+        }
 
-                if (customNPC!=null && townNPCdialogs.ContainsKey(npcName)){
-                    customNPC.dialogs = townNPCdialogs[npcName];
-                }
-
-                return customNPC;
-            }
-            return null;
+        public void SetProKnightSkin()
+        {
+            PronoesProMod.Instance.SetKnightProSkin();
         }
 
         public IEnumerator ShowTitle(int titleType)
