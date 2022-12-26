@@ -1,0 +1,39 @@
+ManifestFileVersion: 0
+CRC: 567881503
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 3af0133bb5b238d195739df6533bdf57
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: e0ba7ab07b607061705b3d6993d5eeb0
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 50
+  Script: {instanceID: 0}
+- Class: 61
+  Script: {instanceID: 0}
+- Class: 62
+  Script: {instanceID: 0}
+- Class: 82
+  Script: {instanceID: 0}
+- Class: 83
+  Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+Assets:
+- Assets/Prefavs/Broken/LampTop.prefab
+Dependencies:
+- F:/Cesar/projects/Unity Game Mods/HK/PronoesMod/PronoesProMod/PronoesProMod/Bundle/sounds

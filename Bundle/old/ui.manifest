@@ -1,0 +1,71 @@
+ManifestFileVersion: 0
+CRC: 2000686255
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 3d59fcc6a26dc9f6021f839be0211037
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: fc8ace4b2a7a1c1bd428054fc0aee3c2
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 1980459831, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+- Class: 114
+  Script: {fileID: 1301386320, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+- Class: 114
+  Script: {fileID: -765806418, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+- Class: 114
+  Script: {fileID: -1200242548, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+- Class: 114
+  Script: {fileID: -900027084, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+- Class: 114
+  Script: {fileID: 708705254, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 128
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 222
+  Script: {instanceID: 0}
+- Class: 223
+  Script: {instanceID: 0}
+- Class: 224
+  Script: {instanceID: 0}
+- Class: 225
+  Script: {instanceID: 0}
+Assets:
+- Assets/Sprites/Icons/icon_sawblade_shriek.png
+- Assets/Sprites/Icons/icon_apple_soul.png
+- Assets/Sprites/Icons/icon_nailmaster_shriek.png
+- Assets/Sprites/Icons/icon_nailmaster_soul.png
+- Assets/Sprites/Icons/icon_def_soul.png
+- Assets/Prefavs/InteractPrompt.prefab
+- Assets/Sprites/Icons/icon_def_shriek.png
+- Assets/Sprites/Icons/icon_sawblade_soul.png
+- Assets/Sprites/Icons/icon_sawblade_dive.png
+- Assets/Sprites/Icons/icon_apple_dive.png
+- Assets/Sprites/Icons/icon_pro_soul.png
+- Assets/Prefavs/InteractionPrompts.prefab
+- Assets/Prefavs/UI.prefab
+- Assets/Sprites/Icons/icon_nailmaster_dive.png
+- Assets/Sprites/Icons/icon_apple_shriek.png
+- Assets/Sprites/Icons/icon_def_dive.png
+Dependencies: []

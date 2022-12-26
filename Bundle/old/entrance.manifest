@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 943760242
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: eb4400758bdc91e32f3a869d391adae8
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 31d6cfe0d16ae931b73c59d7e0c089c0
+HashAppended: 0
+ClassTypes: []
+Assets:
+- Assets/Scenes/entrance.unity
+Dependencies:
+- F:/Cesar/projects/Unity Game Mods/HK/PronoesMod/PronoesProMod/PronoesProMod/Bundle/portal
+- F:/Cesar/projects/Unity Game Mods/HK/PronoesMod/PronoesProMod/PronoesProMod/Bundle/sounds

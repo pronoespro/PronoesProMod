@@ -147,7 +147,7 @@ namespace PronoesProMod
 
         public override string GetVersion()
         {
-            return "Darkness v13.7.0";
+            return "Darkness v0.0.7.13";
         }
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
@@ -1138,11 +1138,13 @@ namespace PronoesProMod
                             createdSpell = ActivateSpell(7);
                             createdSpell.transform.position = HeroController.instance.transform.position;
                             createdSpell.GetComponentInChildren<ParticleSystem>().Play();
-                            createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
                             //createdSpell.GetComponent<AudioSource>().Play();
+                            createdSpell.transform.GetChild(0).gameObject.SetActive(true);
+                            createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
+                            createdSpell.transform.localScale = new Vector3(playerFaceLeft ? -1 : 1, 1, 1);
+
                             DeeExplosionAttack atk = createdSpell.transform.GetChild(0).GetComponent<DeeExplosionAttack>();
                             if (atk != null){
-                                atk.transform.localScale = new Vector3(playerFaceLeft ? -1 : 1, 1, 1);
                                 atk.ChangeMoveDir(new Vector2(playerFaceLeft ? 7f : -7f, 3f));
                                 atk.ResetAttack();
                             }

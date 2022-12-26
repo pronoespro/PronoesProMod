@@ -1,0 +1,44 @@
+ManifestFileVersion: 0
+CRC: 1206381622
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: entrance
+      Dependencies:
+        Dependency_0: portal
+        Dependency_1: sounds
+    Info_1:
+      Name: portal
+      Dependencies: {}
+    Info_2:
+      Name: music
+      Dependencies: {}
+    Info_3:
+      Name: ui
+      Dependencies: {}
+    Info_4:
+      Name: createdtown
+      Dependencies:
+        Dependency_0: sounds
+    Info_5:
+      Name: sounds
+      Dependencies: {}
+    Info_6:
+      Name: brokenobjs
+      Dependencies:
+        Dependency_0: sounds
+    Info_7:
+      Name: hazards
+      Dependencies: {}
+    Info_8:
+      Name: newattacks
+      Dependencies: {}
+    Info_9:
+      Name: npcs
+      Dependencies: {}
+    Info_10:
+      Name: skins
+      Dependencies: {}
+    Info_11:
+      Name: appleminigame
+      Dependencies: {}

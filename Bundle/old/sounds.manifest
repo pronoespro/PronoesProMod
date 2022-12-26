@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 2059224734
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 1b46565485a7553e75cc968b202fb1a3
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 3f7d0c5e0986ec71841622bcb2f9be1c
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+Assets:
+- Assets/sfx/voices/kahmo.wav
+- Assets/sfx/voices/get butha.wav
+- Assets/sfx/box.wav
+- Assets/sfx/voices/sa moh.wav
+- Assets/sfx/bouncers.wav
+- Assets/sfx/spikes.wav
+Dependencies: []

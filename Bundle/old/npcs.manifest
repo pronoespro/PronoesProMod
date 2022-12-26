@@ -1,0 +1,39 @@
+ManifestFileVersion: 0
+CRC: 2404247169
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 7531bbdd8f6a9f7284fa05097ece428e
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: c41012635240fabfaa50983ea2ed6cf3
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 61
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 96
+  Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+Assets:
+- Assets/Prefavs/dee_cart.prefab
+- Assets/Prefavs/Characters/Prono/Character.prefab
+Dependencies: []

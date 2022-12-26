@@ -1,0 +1,17 @@
+ManifestFileVersion: 0
+CRC: 1422223835
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: fcd11c9ee0749adba210b971faa88d12
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 3f7d0c5e0986ec71841622bcb2f9be1c
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+Assets:
+- Assets/sfx/town.wav
+- Assets/sfx/entrance.wav
+Dependencies: []
