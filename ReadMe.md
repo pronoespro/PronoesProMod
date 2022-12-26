@@ -2,24 +2,21 @@
 
 A mod for the game Hollow Knight that adds a new Dream Realm, the creafted town.
 
-Experience a new location alongside a couple new friends
-
-Master the powers they give you in several interesting arenas
+Experience a new location alongside a couple new friends and master the powers they give you in several interesting arenas
 
 Discover the secrets of the forgotten apprentice of the Soul Master
 
-And enjoy a peaceful time on this new, more relaxing expansion mod for Hollow Knight!
+And enjoy a peaceful time on this new, more relaxing expansion mod for Hollow Knight! (At least that's the plan, but it's very early in development as of now)
 
-(At least that's the plan, but it's very early in development as of now)
-
-Contents of the mod (planned):
+### Contents of the mod (planned):
 	-A new location called "The Crafted Town"
-	-Spell variants to spice up combat
+	-Spell variants to spice up combat with small arenas to test them out on
 	-Charm upgrades (gotten by talking to Pro with the charm equipped)
 	-Lore? Maybe
+	-Other ways of obtaining dream essence through minigames
 
-###The Crafted Town is a mod that's still a work in progress, this is just a beta.
-##Please keep the following in mind:
+#### The Crafted Town is a mod that's still a work in progress, this is just a beta.
+### Please keep the following in mind:
 	
 	-This is my first Hollow Knight mod, so it will ABSOLUTELLY have bugs and stuff that doesn't work as intended or just breaks in general. You have been warned
 	-All the spell swaps are available from the get-go, which will not be the case on the full release (if it ever comes)
@@ -33,4 +30,4 @@ Contents of the mod (planned):
 	-You are allowed to make mods to change how this mod works, just don't be mean about it... I have feelings after all :C
 	-Do not post NSFW art of my characters on SFW places, please (I don't care if you actually do nsfw, just be carefull where you submit it)
 
-	-IMPORTANT: The sawblade attack will probably break Soul Warior, I'm not fixing this for now as it's not important enough. Soul Warior can be cheesed all you want for all I care.
+####	-IMPORTANT: The sawblade attack will probably break Soul Warior, I'm not fixing this for now as it's not important enough. Soul Warior can be cheesed all you want for all I care.
