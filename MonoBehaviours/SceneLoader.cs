@@ -21,7 +21,7 @@ namespace PronoesProMod
                 new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_upgrade_charm_dash_0","prono_upgrade_charm_dash_1","prono_upgrade_charm_dash_2" }, new string[] { "kahmo" }, "Pronoespro_MAIN", "Pronoespro_SUPER", "Pronoespro_SUB", 4f,false,true,dialogRequirements:new string[]{ "Charm:31"},inteactionDisplay:"Talk"),
                 new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_welcome_3" }, new string[] { "kahmo" }, "Pronoespro_MAIN", "Pronoespro_SUPER", "Pronoespro_SUB", 2.5f,false,false,inteactionDisplay:"Talk") } }};
         //Apple minigame
-        public string[] appleMiniGOs = new string[] { "EntranceWalls", "Objects" };
+        public string[] appleMiniGOs = new string[] { "Objects", "TownBackground", "default", "Grid" };
         
         //General
         public string hitParticlesName = "Bounce_hit",spikePariclesName = "Spike_hit",successParticlesName="Success";
@@ -167,7 +167,7 @@ namespace PronoesProMod
                     //pro.dialogs[1].onStart.AddListener(() => NextDialogOfNPC(pro));
                 }
 
-                //CreateGateway("right",new Vector2(271, 10.28f), new Vector2(5, 1), "appleminigame", "right", true,false,GameManager.SceneLoadVisualizations.Default);
+                //CreateGateway("right",new Vector2(271, 10.28f), new Vector2(5, 1), "appleminigame", "left", true,false,GameManager.SceneLoadVisualizations.Default);
 
                 LoadObjects(townGOs);
                 LoadInteractables(townInteractables);
@@ -188,6 +188,7 @@ namespace PronoesProMod
             }
             else if (self.sceneName== "appleminigame")
             {
+                LoadUI();
                 PronoesProMod.Instance.Log("Started creating minigame");
                 if (PronoesProMod.Instance.preloadedObjs.ContainsKey("Tutorial_01") && PronoesProMod.Instance.preloadedObjs["Tutorial_01"].ContainsKey("_SceneManager"))
                 {
@@ -195,7 +196,7 @@ namespace PronoesProMod
                 }
 
                 LoadBlurPlane(new Vector3(420, 30, 7), new Vector3(100, 17, 17));
-                CreateDoor("right", new Vector2(10, 16), new Vector2(1, 16), "CreatedTown", "right", true,true,GameManager.SceneLoadVisualizations.Default);
+                CreateGateway("left", new Vector2(10, 16), new Vector2(5, 1), "CreatedTown", "right", true, true, GameManager.SceneLoadVisualizations.Default);
 
                 LoadObjects(appleMiniGOs);
 
