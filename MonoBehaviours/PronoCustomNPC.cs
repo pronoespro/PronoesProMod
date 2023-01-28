@@ -19,11 +19,14 @@ namespace PronoesProMod.MonoBehaviours
         public string interactionPrompt = "Interact";
         public string[] requirements;
 
+        public string[] dreamNailDialog;
+        public string[] dreamNailSounds;
+
         public float dialogSpeed = 2;
         public UnityEvent onStart, onContinue, onEnd;
 
         public DialogSettings(LayerMask collisionMask, string[] dialog, string[] sounds, string name = "", string superName = "", string subName = "", float speed = 2f, bool startOnCollision = false, bool nextWhenFinished = true,
-            UnityEvent onStartConversation = null, UnityEvent onContinueConversation = null, UnityEvent onEndConversation = null, string inteactionDisplay = "Interact", string[] dialogRequirements = null)
+            UnityEvent onStartConversation = null, UnityEvent onContinueConversation = null, UnityEvent onEndConversation = null, string inteactionDisplay = "Interact", string[] dialogRequirements = null,string[] dialogDreamNail=null,string[] soundDreamNail=null)
         {
             mask = collisionMask;
 
@@ -43,6 +46,9 @@ namespace PronoesProMod.MonoBehaviours
 
             interactionPrompt = inteactionDisplay;
             requirements = dialogRequirements;
+
+            dreamNailDialog = dialogDreamNail;
+            dreamNailSounds = soundDreamNail;
         }
 
         public static LayerMask GetDefaultMask()
@@ -167,6 +173,11 @@ namespace PronoesProMod.MonoBehaviours
                             PronoesProMod.Instance.ChangeDialogEvents(dialog.onStart, dialog.onContinue, dialog.onEnd);
                         }
                     }
+                }
+                else if(collider.tag== "Dream Attack" && dialog.dreamNailDialog!=null && dialog.dreamNailDialog.Length>0)
+                {
+                    PronoesProMod.Instance.ShowDialogBox(dialog.npcSuperName, dialog.npcName, dialog.npcSubName, dialog.dreamNailDialog, dialog.dreamNailSounds, dialog.dialogSpeed);
+                    PronoesProMod.Instance.ChangeDialogEvents(null,null,null);
                 }
             }
         }
