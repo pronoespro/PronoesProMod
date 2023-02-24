@@ -22,10 +22,17 @@ namespace PronoesProMod
             {"prono_welcome_1","Or something like that" },
             {"prono_welcome_2","Me and my partner here wanted to help you in your journey" },
             {"prono_welcome_3","If you need anything, be not afraid to ask" },
-            {"prono_welcome_4","" },
+            {"prono_towncreated_0","This town is the labour of a lot of work from Dee and I..." },
+            {"prono_towncreated_1","Honestly, I forgot how the world even looked like until you came to Hallownest" },
+            {"prono_towncreated_2","Well, I just hope you enjoy it here... if you even can, with no mind and all that" },
+
             {"prono_upgrade_charm_dash_0","Oh, look at that charm! 'Dashmaster', right?" },
             {"prono_upgrade_charm_dash_1","Let me upgrade it for you, so you can explore with more ease" },
             {"prono_upgrade_charm_dash_2","OK, now it's done. Have fun dashing around with it!" },
+            {"prono_upgrade_charm_dream_shield_0","Oh, look at that charm! 'Dream Shield'?" },
+            {"prono_upgrade_charm_dream_shield_1","This could be a little different, let me have a go at it" },
+            {"prono_upgrade_charm_dream_shield_2","There you go!, now it's... different" },
+
             {"prono_dreamnail_0","What a wonderfull tool, wish I had something interesting to say." },
 
             //Interactables
@@ -102,7 +109,10 @@ namespace PronoesProMod
 
             //1: Dashmaster
             {"DashmasterUpgrade_Name","Upgraded Dashmaster" },
-            {"DashmasterUpgrade_Desc","Bears the likeness of an eccentric bug known only as 'The Dashmaster', but even weirder.\n\nThe bearer will be able to dash more often and slightly tilted up or directly downwards, and crystal dash will charge faster. Perfect for those who want to move around at the speed of sound!" }
+            {"DashmasterUpgrade_Desc","Bears the likeness of an eccentric bug known only as 'The Dashmaster', but even weirder.\n\nThe bearer will be able to dash more often and slightly up or directly downwards, and crystal dash will charge faster. Perfect for those who want to move around at the speed of sound!" },
+
+            {"DeeShieldUpgrade_Name","Dee Shield" },
+            {"DeeShieldUpgrade_Desc","Dream Shield, but now with a 100% more Dee!\n\nWill summon a Dream Shield that can be targetted and will shoot out a wave of light in it's direction. Can be used downwards to get a big jump fast." }
         };
 
     }

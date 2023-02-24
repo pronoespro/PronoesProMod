@@ -1,9 +1,9 @@
 ManifestFileVersion: 0
-CRC: 2141661245
+CRC: 1228769556
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 3cd6f35b38901ad792fb8302f7259183
+    Hash: ba489c7533b5ac5e6253d7468cecd077
   TypeTreeHash:
     serializedVersion: 2
     Hash: 2f22617b4028db06ca73f7256a7b5c1f
@@ -48,16 +48,19 @@ ClassTypes:
 - Class: 213
   Script: {instanceID: 0}
 Assets:
-- Assets/Prefavs/Attacks/ShootSawbladeAttack.prefab
-- Assets/Prefavs/Attacks/AppleAttack.prefab
-- Assets/Prefavs/Attacks/ApplePieSawblade.prefab
-- Assets/Prefavs/Attacks/NailBarrage.prefab
-- Assets/Prefavs/Attacks/NailAttack.prefab
-- Assets/Prefavs/Attacks/DeeExplosionParticles.prefab
-- Assets/Prefavs/Attacks/AppleSliceAttack.prefab
-- Assets/Prefavs/Attacks/FallingNails.prefab
-- Assets/Prefavs/Attacks/SawbladeShout.prefab
-- Assets/Prefavs/Attacks/Dee_explode.prefab
-- Assets/Prefavs/Attacks/GiantNail.prefab
-- Assets/Prefavs/Attacks/SawbladeAttack.prefab
-Dependencies: []
+- Assets/Prefavs/Attacks/Spells/ShootSawbladeAttack.prefab
+- Assets/Prefavs/Attacks/Spells/AppleAttack.prefab
+- Assets/Prefavs/Attacks/CharmUpgrades/DeeShield.prefab
+- Assets/Prefavs/Attacks/CharmUpgrades/DeeShield_projectile.prefab
+- Assets/Prefavs/Attacks/Spells/ApplePieSawblade.prefab
+- Assets/Prefavs/Attacks/Spells/NailBarrage.prefab
+- Assets/Prefavs/Attacks/Spells/NailAttack.prefab
+- Assets/Prefavs/Attacks/Spells/DeeExplosionParticles.prefab
+- Assets/Prefavs/Attacks/Spells/AppleSliceAttack.prefab
+- Assets/Prefavs/Attacks/Spells/FallingNails.prefab
+- Assets/Prefavs/Attacks/Spells/SawbladeShout.prefab
+- Assets/Prefavs/Attacks/Spells/Dee_explode.prefab
+- Assets/Prefavs/Attacks/Spells/GiantNail.prefab
+- Assets/Prefavs/Attacks/Spells/SawbladeAttack.prefab
+Dependencies:
+- F:/Cesar/projects/Unity Game Mods/HK/PronoesMod/PronoesProMod/PronoesProMod/Bundle/sounds

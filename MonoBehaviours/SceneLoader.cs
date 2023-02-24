@@ -17,9 +17,11 @@ namespace PronoesProMod
         public string[] townGOs = new string[] { "TownGround","Decorations", "crates_d", "NoBounce_nb", "Spikes_spk","Lamps_l", "Basket", "DeeCart_points", "Temple", "ultimate bench" };
         public DialogPromptInteractableObject[] townInteractables = new DialogPromptInteractableObject[] { new DialogPromptInteractableObject("ultimate bench", new string[] { "UltimateBench1", "UltimateBench2" },new string[] { ""},"Rest")};
         public Dictionary<string, DialogSettings[]> townNPCdialogs = new Dictionary<string, DialogSettings[]> {
-            {"Pro", new DialogSettings[] { new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_welcome_0", "prono_welcome_1", "prono_welcome_2" }, new string[] { "kahmo"}, "Pronoespro_MAIN", "Pronoespro_SUB", "Pronoespro_SUPER", 2f,true,true,inteactionDisplay:"Talk",dialogDreamNail:new string[]{ "prono_dreamnail_0" },soundDreamNail:new string[]{  } ),
-                new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_upgrade_charm_dash_0","prono_upgrade_charm_dash_1","prono_upgrade_charm_dash_2" }, new string[] { "kahmo" }, "Pronoespro_MAIN", "Pronoespro_SUPER", "Pronoespro_SUB", 4f,false,true,dialogRequirements:new string[]{ "Charm:31"},inteactionDisplay:"Talk"),
-                new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_welcome_3" }, new string[] { "kahmo" }, "Pronoespro_MAIN", "Pronoespro_SUPER", "Pronoespro_SUB", 2.5f,false,false,inteactionDisplay:"Talk") } }};
+            {"Pro", new DialogSettings[] { new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_welcome_0", "prono_welcome_1", "prono_welcome_2" }, new string[] { "kahmo"}, "Pronoespro_MAIN", "Pronoespro_SUB", "Pronoespro_SUPER", 2f,true,true,inteactionDisplay:"Talk",dialogDreamNail:new string[]{ "prono_dreamnail_0" },soundDreamNail:new string[]{  },dialogRequirements:new string[]{ "var:0"}),
+                new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_upgrade_charm_dash_0","prono_upgrade_charm_dash_1","prono_upgrade_charm_dash_2" }, new string[] { "kahmo" }, "Pronoespro_MAIN", "Pronoespro_SUPER", "Pronoespro_SUB", 4f,false,true,dialogRequirements:new string[]{ "Charm:31"},inteactionDisplay:"Upgrade Dashmaster"),
+                new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_upgrade_charm_dream_shield_0", "prono_upgrade_charm_dream_shield_1", "prono_upgrade_charm_dream_shield_2" }, new string[] { "kahmo" }, "Pronoespro_MAIN", "Pronoespro_SUPER", "Pronoespro_SUB", 4f,false,true,dialogRequirements:new string[]{  "Charm:38"},inteactionDisplay:"Upgrade Dreamshield"),
+                new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_towncreated_0","prono_towncreated_1","prono_towncreated_2" }, new string[] { "kahmo" }, "Pronoespro_MAIN", "Pronoespro_SUPER", "Pronoespro_SUB",3f,false,true,inteactionDisplay:"Talk"),
+                new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_welcome_3" }, new string[] { "kahmo" }, "Pronoespro_MAIN", "Pronoespro_SUPER", "Pronoespro_SUB", 2.5f,false,false,inteactionDisplay:"Talk",canRepeat:true) } }};
         //Apple minigame
         public string[] appleMiniGOs = new string[] { "Objects", "TownBackground", "default", "Grid" };
         
@@ -156,13 +158,14 @@ namespace PronoesProMod
                 PronoCustomNPC pro= LoadCharacter("npcs", new Vector3(105,13.75f,1),"Pro");
 
                 if (pro != null){
-                    //pro.dialogs[0].onEnd.AddListener(() => NextDialogOfNPC(pro));
+                    pro.dialogs[0].onEnd.AddListener(() =>PronoesProMod.Instance.IntroDone());
 
                     pro.dialogs[1].onEnd.AddListener(() => UpgradeCharm(0));
+                    pro.dialogs[2].onEnd.AddListener(() => UpgradeCharm(1));
                     PronoesProMod.Instance.Log("Added charm upgrade OwO");
 
-                    pro.dialogs[2].onEnd.AddListener(() => SetProKnightSkin());
-                    pro.dialogs[2].onEnd.AddListener(() => SetProKnightSkin());
+                    pro.dialogs[3].onEnd.AddListener(() => SetProKnightSkin());
+                    pro.dialogs[3].onEnd.AddListener(() => SetProKnightSkin());
                     PronoesProMod.Instance.Log("Added costume upgrade! YAY!");
                     //pro.dialogs[1].onStart.AddListener(() => NextDialogOfNPC(pro));
                 }
@@ -440,7 +443,7 @@ namespace PronoesProMod
 
         public void NextDialogOfNPC(PronoCustomNPC npc)
         {
-            npc.NextDialog();
+            npc.AddDialogDone();
             PronoesProMod.Instance.Log("Next Dialog!");
         }
 

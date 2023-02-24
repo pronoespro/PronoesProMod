@@ -52,6 +52,7 @@ namespace PronoesProMod
 
         public bool fadedIn;
 
+        //Spells
         public Dictionary<string, FsmState> ogDiveStates;
         public string[] ogDiveStateNames = new string[] { "Quake1 Land", "Q2 Land", "Q2 Pillar","Quake1 Down","Quake2 Down","Quake Antic", "Spell End"};
         public Dictionary<string, FsmState> ogSoulStates;
@@ -59,16 +60,34 @@ namespace PronoesProMod
         public Dictionary<string, FsmState> ogShriekStates;
         public string[] ogShriekStateNames = new string[] {"Scream Antic1", "Scream Antic2", "Scream Burst 1", "Scream Burst 2" };
 
-        public static GameObject levelNameDisplay;
-        public static Transform spellChangeUI;
+        //Charms
+        public Dictionary<string, FsmState> ogCharmStates;
+        public Dictionary<string,Transform> charmSpawns;
+        public Dictionary<string, int> charmProjectileNums;
+        public Transform ogDreamShield;
 
         public string[] spellSpriteNames = new string[] { "icon_apple_shriek", "icon_apple_soul", "icon_apple_dive", "icon_def_dive", "icon_def_shriek", "icon_def_soul", "icon_nailmaster_dive", "icon_nailmaster_shriek", "icon_nailmaster_soul", "icon_sawblade_dive", "icon_sawblade_soul", "icon_sawblade_shriek", "icon_pro_soul" };
         public Dictionary<string, Sprite> spellSprites;
+
+        //Save Data
         private bool proSkinUsing;
+        private bool proIntroDone;
+        private bool loadedKnightPowersAndSkins;
+
+        public static GameObject levelNameDisplay;
+        public static Transform spellChangeUI;
+
+        public int soul, shriek, dive;
+
 
 
         public static string[] MeleeAttacks = new string[] { "Nail Attack" };
 
+        public void IntroDone(){
+            proIntroDone = true;
+        }
+
+        public bool IsIntroDone() { return proIntroDone; }
 
         public Dictionary<string, string[]> spellNameKeys = new Dictionary<string, string[]>(){
             { "INV_NAME_SPELL_SCREAM1",new string[]{ "Soul_sawblade_0", "Soul_nailmaster_0", "Shriek_apple_0" } },
@@ -131,6 +150,8 @@ namespace PronoesProMod
 
             GameObject.Destroy(levelNameDisplay);
             levelNameDisplay = null;
+            charmSpawns = null;
+            loadedKnightPowersAndSkins = fadedIn;
         }
 
         public void UnloadCharacterSpecificVariables()
@@ -147,7 +168,7 @@ namespace PronoesProMod
 
         public override string GetVersion()
         {
-            return "Darkness v0.0.7.13";
+            return "Darkness v0.0.13.7";
         }
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
@@ -293,7 +314,7 @@ namespace PronoesProMod
         public void SetupMethods()
         {
 
-            ModHooks.DashVectorHook += SmallUpDash;
+            ModHooks.DashVectorHook += UpDash;
 
             ModHooks.AfterSavegameLoadHook += AfterSave;
             ModHooks.NewGameHook += NewGameStarting;
@@ -307,7 +328,7 @@ namespace PronoesProMod
 
         public void UnloadMethods()
         {
-            ModHooks.DashVectorHook -= SmallUpDash;
+            ModHooks.DashVectorHook -= UpDash;
 
             ModHooks.AfterSavegameLoadHook -= AfterSave;
             ModHooks.NewGameHook -= NewGameStarting;
@@ -491,11 +512,11 @@ namespace PronoesProMod
         }
 
 
-        public Vector2 SmallUpDash(Vector2 vel)
+        public Vector2 UpDash(Vector2 vel)
         {
-            if (PlayerData.instance.GetBool("equippedCharm_31") && vel.y == 0 && upgradedCharms[0])
+            if (PlayerData.instance.GetBool("equippedCharm_31") && vel.y == 0 && upgradedCharms[0] && Mathf.Abs(HeroController.instance.vertical_input)>0.1f)
             {
-                return vel + new Vector2(0f, Mathf.Abs(vel.x) * 15f * Time.deltaTime);
+                return vel*0.75f + new Vector2(0f, Mathf.Abs(vel.x) * 30f * Time.deltaTime);
             }
             return vel;
         }
@@ -587,6 +608,7 @@ namespace PronoesProMod
             OnSaveLocal();
         }
 
+        #region spells
         private static void ReadySpells(On.HeroController.orig_Awake orig, HeroController self)
         {
             // Call orig so the original OnEnable function happens - otherwise things will break
@@ -829,12 +851,30 @@ namespace PronoesProMod
             // Execute your code here - I like making it a separate function but you could just do it all here if you prefer
             if (self.gameObject.name == "Knight")
             {
+
+                if (!loadedKnightPowersAndSkins)
+                {
+                    loadedKnightPowersAndSkins = true;
+
+                    soulType = soul;
+                    shriekType = shriek;
+                    diveType = dive;
+
+                    if (proSkinUsing)
+                    {
+                        SetKnightProSkin();
+                    }
+                }
+
                 Instance.IncreaseCDashSpeed(self.superDash);
+                Instance.UpgradeDreamShield(self.fsm_orbitShield);
                 Instance.SpellSwap(self.spellControl);
+
             }
+
         }
 
-        int diveType,soulType,shriekType;
+        public int diveType,soulType,shriekType;
 
         public void SpellSwap(PlayMakerFSM fsm)
         {
@@ -1373,10 +1413,11 @@ namespace PronoesProMod
                     {
                         fsm.AddAction(fsm.FsmStates[i].Name, og.Actions[a]);
                     }
-                    Log("Restored state " + og.Name);
+                    //Log("Restored state " + og.Name);
                 }
             }
         }
+        #endregion
 
         public void IncreaseCDashSpeed(PlayMakerFSM fsm)
         {
@@ -1388,6 +1429,227 @@ namespace PronoesProMod
                 fsm.FsmVariables.FindFsmFloat("Y Speed").Value = (PlayerData.instance.GetBool("equippedCharm_31") ? 13f : 0f);
             }
         }
+
+        public void UpgradeDreamShield(PlayMakerFSM fsm)
+        {
+
+            if (upgradedCharms[1] && !BossSequenceController.BoundCharms)
+            {
+                if (ogCharmStates == null)
+                {
+                    ogCharmStates = new Dictionary<string, FsmState>();
+                }
+                if (!ogCharmStates.ContainsKey("DreamShield_spawn"))
+                {
+                    ogCharmStates.Add("DreamShield_spawn", new FsmState(fsm.GetFsmState("Spawn")));
+                    ogCharmStates.Add("DreamShield_idle", new FsmState(fsm.GetFsmState("Idle")));
+                    ogCharmStates.Add("DreamShield_slash", new FsmState(fsm.GetFsmState("Send Slash Event")));
+                }
+
+                //Log("Dee Shield control");
+
+                foreach (string key in ogCharmStates.Keys)
+                {
+                    RestoreAction(fsm, ogCharmStates[key]);
+                }
+
+                fsm.RemoveAction("Spawn", 0);
+                fsm.RemoveAction("Spawn", 0);
+                fsm.RemoveAction("Spawn", 0);
+
+                fsm.AddMethod("Spawn", () =>
+                {
+                    //Log("Create Dee Shield");
+                    CreateDeeShield();
+                });
+
+                fsm.AddMethod("Idle", () =>
+                {
+                    CreateDeeShield();
+
+                    if (charmSpawns == null)
+                    {
+                        charmSpawns = new Dictionary<string, Transform>();
+                    }
+                    if (charmSpawns.ContainsKey("DeeShield"))
+                    {
+                        charmSpawns["DeeShield"].position = HeroController.instance.transform.position;
+                    }
+                });
+
+                fsm.AddMethod("Send Slash Event", () => {
+
+                    CreateDeeShield();
+
+                    if (charmSpawns.ContainsKey("DeeShield"))
+                    {
+                        DeeShield shield = charmSpawns["DeeShield"].GetComponent<DeeShield>();
+                        shield.Slash();
+                    }
+                });
+            }
+            else
+            {
+                if (ogCharmStates != null)
+                {
+                    foreach (string key in ogCharmStates.Keys)
+                    {
+                        RestoreAction(fsm, ogCharmStates[key]);
+                    }
+                }
+
+                if (charmSpawns == null)
+                {
+                    charmSpawns = new Dictionary<string, Transform>();
+                }
+                if (charmSpawns.ContainsKey("DeeShield"))
+                {
+                    charmSpawns["DeeShield"].gameObject.SetActive(false);
+                }
+            }
+        }
+
+        public void CreateDeeShield()
+        {
+            if (ogDreamShield == null && GameObject.Find("Orbit Shield(Clone)") != null)
+            {
+                ogDreamShield = GameObject.Find("Orbit Shield(Clone)").transform;
+            }
+            if (ogDreamShield != null)
+            {
+                ogDreamShield.gameObject.SetActive(false);
+                if (charmSpawns == null)
+                {
+                    charmSpawns = new Dictionary<string, Transform>();
+                }
+                if (!charmSpawns.ContainsKey("DeeShield"))
+                {
+                    if (GOBundle.ContainsKey("newattacks"))
+                    {
+                        Transform prefav = GOBundle["newattacks"].LoadAsset<GameObject>("DeeShield").transform;
+                        Transform shield = GameObject.Instantiate(prefav);
+                        shield.gameObject.AddComponent<DeeShield>();
+                        shield.gameObject.AddComponent<NonBouncer>();
+
+                        shield.Find("LazerStopper").gameObject.AddComponent<NonBouncer>();
+
+                        charmSpawns.Add("DeeShield", shield);
+
+                    }
+                }
+                else
+                {
+                    if (charmSpawns["DeeShield"] == null)
+                    {
+                        charmSpawns.Remove("DeeShield");
+                        if (GOBundle.ContainsKey("newattacks"))
+                        {
+                            Transform prefav = GOBundle["newattacks"].LoadAsset<GameObject>("DeeShield").transform;
+                            Transform shield = GameObject.Instantiate(prefav);
+                            shield.gameObject.AddComponent<DeeShield>();
+                            shield.gameObject.AddComponent<NonBouncer>();
+
+                            shield.Find("LazerStopper").gameObject.AddComponent<NonBouncer>();
+
+                            charmSpawns.Add("DeeShield", shield);
+                        }
+                    }
+                    else
+                    {
+                        charmSpawns["DeeShield"].gameObject.SetActive(true);
+                    }
+
+                }
+            }
+        }
+
+        public void CreateDeeShieldProjectile(Vector2 pos, Quaternion rot)
+        {
+            if (charmSpawns == null)
+            {
+                charmSpawns = new Dictionary<string, Transform>();
+            }
+
+            if(charmSpawns.ContainsKey("DeeShield_proj_0") && charmSpawns["DeeShield_proj_0"] == null){
+                for (int i = 0; i < 3; i++){
+                    charmSpawns.Remove("DeeShield_proj_" + i.ToString());
+                }
+            }
+
+            if (!charmSpawns.ContainsKey("DeeShield_proj_0"))
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    List<Collider2D> colliders = new List<Collider2D>();
+
+                    Transform prefav = GOBundle["newattacks"].LoadAsset<GameObject>("DeeShield_projectile").transform;
+                    Transform shield = GameObject.Instantiate(prefav,pos,rot);
+
+                    DeeShield_Projectile proj= shield.gameObject.AddComponent<DeeShield_Projectile>();
+                    shield.gameObject.AddComponent<NonBouncer>();
+
+                    DeeShield_ProjectileCollision[] cols = new DeeShield_ProjectileCollision[2];
+
+                    DamageEnemies dmg = shield.Find("StrongAttack").gameObject.AddComponent<DamageEnemies>();
+
+                    cols[0] = dmg.gameObject.AddComponent<DeeShield_ProjectileCollision>();
+                    cols[0].parent = proj.transform;
+
+                    dmg.attackType = AttackTypes.NailBeam;
+                    dmg.damageDealt = 2;
+
+                    dmg.gameObject.AddComponent<NonBouncer>();
+                    colliders.Add(dmg.GetComponent<Collider2D>());
+
+                    /* Weak attack */
+                    dmg = shield.Find("WeakAttack").gameObject.AddComponent<DamageEnemies>();
+                    
+                    cols[1] = dmg.gameObject.AddComponent<DeeShield_ProjectileCollision>();
+                    cols[1].parent = proj.transform;
+
+                    dmg.attackType = AttackTypes.NailBeam;
+                    dmg.damageDealt = 1;
+
+                    dmg.gameObject.AddComponent<NonBouncer>();
+
+                    colliders.Add(dmg.GetComponent<Collider2D>());
+
+
+
+                    charmSpawns.Add("DeeShield_proj_"+i.ToString(), shield);
+                    shield.gameObject.SetActive(i==0);
+                    if (charmProjectileNums == null)
+                    {
+                        charmProjectileNums = new Dictionary<string, int>();
+                        charmProjectileNums.Add("DeeShield", 1);
+                    }
+
+                    proj.colliders = colliders.ToArray();
+
+                }
+            }else{
+                if (charmProjectileNums == null)
+                {
+                    charmProjectileNums = new Dictionary<string, int>();
+                    charmProjectileNums.Add("DeeShield", 0);
+                }
+                else
+                {
+                    if (charmProjectileNums.ContainsKey("DeeShield")){
+                        charmProjectileNums["DeeShield"] = (charmProjectileNums["DeeShield"] + 1) % 3;
+                    }else{
+                        charmProjectileNums.Add("DeeShield", 0);
+                    }
+                }
+
+                if (charmSpawns.ContainsKey("DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())) && charmSpawns["DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())]!=null){
+                    charmSpawns["DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())].gameObject.SetActive(true);
+                    charmSpawns["DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())].position=pos;
+                    charmSpawns["DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())].rotation=rot;
+                }
+            }
+        }
+
         #endregion
 
         #region Saving and Loading
@@ -1400,7 +1662,7 @@ namespace PronoesProMod
 
         #region Local variables
         public PronoesproLocalSaveData LocalSaveData { get; set; } = new PronoesproLocalSaveData();
-        public void OnLoadLocal(PronoesproLocalSaveData s) => LocalSaveData = s;
+        public void OnLoadLocal(PronoesproLocalSaveData s) => LoadData(s);
         public PronoesproLocalSaveData OnSaveLocal() => LocalSaveData;
         #endregion
 
@@ -1408,12 +1670,36 @@ namespace PronoesProMod
         {
             ModHooks.SavegameLoadHook += slot =>
               {
+                  LocalSaveData = new PronoesproLocalSaveData();
+
                   LocalSaveData.hasShieldSpell = hasShieldSpell;
                   LocalSaveData.hasSwordsSpell = hasSwordsSpell;
                   LocalSaveData.hasTeleportSpell = hasTeleportSpell;
 
-                  LocalSaveData.proKnightSkin =proSkinUsing;
+                  LocalSaveData.equipedQuake = diveType;
+                  LocalSaveData.equipedShriek = shriekType;
+                  LocalSaveData.equipedSouls = soulType;
+
+                  LocalSaveData.proKnightSkin = proSkinUsing;
+                  LocalSaveData.proInttroductionDone = proIntroDone;
               };
+        }
+
+        public void LoadData(PronoesproLocalSaveData s)
+        {
+            Log("Loading data...");
+            LocalSaveData = s;
+
+            hasShieldSpell = LocalSaveData.hasShieldSpell;
+            hasSwordsSpell = LocalSaveData.hasSwordsSpell;
+            hasTeleportSpell = LocalSaveData.hasTeleportSpell;
+
+            dive = LocalSaveData.equipedQuake;
+            shriek= LocalSaveData.equipedShriek;
+            soul= LocalSaveData.equipedSouls;
+
+            proSkinUsing = LocalSaveData.proKnightSkin;
+            proIntroDone = LocalSaveData.proInttroductionDone;
         }
 
         #endregion
@@ -1668,6 +1954,18 @@ namespace PronoesProMod
                 }
             }
 
+            if (upgradedCharms[1])
+            {
+                if (key == "CHARM_DESC_38" && LanguageData.englishSentences.ContainsKey("DeeShieldUpgrade_Desc"))
+                {
+                    return LanguageData.englishSentences["DeeShieldUpgrade_Desc"];
+                }
+                if (key == "CHARM_NAME_38" && LanguageData.englishSentences.ContainsKey("DeeShieldUpgrade_Name"))
+                {
+                    return LanguageData.englishSentences["DeeShieldUpgrade_Name"];
+                }
+            }
+
 
             if (sheetTitle == "UI" && spellNameKeys.ContainsKey(key))
             {
@@ -1761,6 +2059,7 @@ namespace PronoesProMod
         public int equipedSouls, equipedShriek, equipedQuake;
 
         public bool proKnightSkin;
+        public bool proInttroductionDone;
     }
     #endregion
 

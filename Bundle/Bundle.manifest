@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3085544511
+CRC: 106288170
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -32,7 +32,8 @@ AssetBundleManifest:
       Dependencies: {}
     Info_8:
       Name: newattacks
-      Dependencies: {}
+      Dependencies:
+        Dependency_0: sounds
     Info_9:
       Name: npcs
       Dependencies: {}
@@ -41,4 +42,5 @@ AssetBundleManifest:
       Dependencies: {}
     Info_11:
       Name: appleminigame
-      Dependencies: {}
+      Dependencies:
+        Dependency_0: newattacks

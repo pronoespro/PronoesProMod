@@ -12,6 +12,7 @@ namespace PronoesProMod.MonoBehaviours
         public LayerMask mask = 10000000;
         public bool onCollision;
         public bool nextDialogOnFinish;
+        public bool repeat;
         public string npcSuperName, npcName, npcSubName;
 
         public string[] conversation;
@@ -26,7 +27,7 @@ namespace PronoesProMod.MonoBehaviours
         public UnityEvent onStart, onContinue, onEnd;
 
         public DialogSettings(LayerMask collisionMask, string[] dialog, string[] sounds, string name = "", string superName = "", string subName = "", float speed = 2f, bool startOnCollision = false, bool nextWhenFinished = true,
-            UnityEvent onStartConversation = null, UnityEvent onContinueConversation = null, UnityEvent onEndConversation = null, string inteactionDisplay = "Interact", string[] dialogRequirements = null,string[] dialogDreamNail=null,string[] soundDreamNail=null)
+            UnityEvent onStartConversation = null, UnityEvent onContinueConversation = null, UnityEvent onEndConversation = null, string inteactionDisplay = "Interact", string[] dialogRequirements = null,string[] dialogDreamNail=null,string[] soundDreamNail=null,bool canRepeat=false)
         {
             mask = collisionMask;
 
@@ -49,6 +50,7 @@ namespace PronoesProMod.MonoBehaviours
 
             dreamNailDialog = dialogDreamNail;
             dreamNailSounds = soundDreamNail;
+            repeat = canRepeat;
         }
 
         public static LayerMask GetDefaultMask()
@@ -63,8 +65,13 @@ namespace PronoesProMod.MonoBehaviours
     {
 
         public DialogSettings[] dialogs;
+        public List<int> dialogsDone;
 
         public string sceneName;
+
+        public void Start(){
+            dialogsDone = new List<int>();
+        }
 
         public void SetDialogSettings(DialogSettings[] npcDialog)
         {
@@ -73,29 +80,47 @@ namespace PronoesProMod.MonoBehaviours
 
             for(int i = 0; i < dialogs.Length; i++){
                 if (dialogs[i].nextDialogOnFinish){
-                    dialogs[i].onEnd.AddListener(() => NextDialog());
+                    dialogs[i].onEnd.AddListener(() => AddDialogDone());
                     PronoesProMod.Instance.Log("Added dialog continuing to "+i.ToString());
                 }
             }
         }
 
-        public DialogSettings GetCurrentSettings()
-        { 
+        public int GetCurrentDialogNum()
+        {
             if (dialogs.Length > 0)
             {
-                for(int i = 0; i < dialogs.Length; i++)
+                for (int i = 0; i < dialogs.Length; i++)
                 {
-                    if (dialogs[i].requirements!=null){
-                        if (RequirementsMet(dialogs[i].requirements)){
-                            return dialogs[i];
+                    if (dialogs[i].repeat || !dialogsDone.Contains(i)) {
+                        if (dialogs[i].requirements != null)
+                        {
+                            if (RequirementsMet(dialogs[i].requirements))
+                            {
+                                return i;
+                            }
                         }
-                    }else{
-                        return dialogs[i];
+                        else
+                        {
+                            return i;
+                        }
                     }
                 }
-                return dialogs[0];
+                return 0;
             }
-            return null;
+            return -1;
+        }
+
+        public DialogSettings GetCurrentSettings()
+        {
+            if (GetCurrentDialogNum() >= 0)
+            {
+                return dialogs[GetCurrentDialogNum()];
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public bool RequirementsMet(string[] requirements)
@@ -130,6 +155,18 @@ namespace PronoesProMod.MonoBehaviours
                                     return false;
                                 }
                                 break;
+                            case "variable":
+                            case "var":
+                                switch (requiredNum){
+                                    default:
+                                    case 0:
+                                        if (PronoesProMod.Instance.IsIntroDone())
+                                        {
+                                            return false;
+                                        }
+                                        break;
+                                }
+                                break;
                         }
                     }
                 }
@@ -137,20 +174,12 @@ namespace PronoesProMod.MonoBehaviours
             return true;
         }
 
-        public void NextDialog()
+        public void AddDialogDone()
         {
-            if (dialogs.Length > 1)
+            if (GetCurrentDialogNum() >= 0 && !dialogsDone.Contains(GetCurrentDialogNum()))
             {
-                DialogSettings[] newSettings = new DialogSettings[dialogs.Length - 1];
-                for (int i = 0; i < newSettings.Length; i++)
-                {
-                    newSettings[i] = dialogs[i+1];
-                }
-                dialogs = newSettings;
-            }else{
-                dialogs = new DialogSettings[0];
+                dialogsDone.Add(GetCurrentDialogNum());
             }
-            PronoesProMod.Instance.Log("New dialog ammount is: "+dialogs.Length);
         }
 
         public void OnTriggerEnter2D(Collider2D collider)
@@ -182,6 +211,13 @@ namespace PronoesProMod.MonoBehaviours
             }
         }
 
+        public bool KnightReady()
+        {
+            return HeroController.instance.CheckTouchingGround() 
+                && Mathf.Abs(HeroController.instance.GetComponent<Rigidbody2D>().velocity.y) < 0.1f 
+                && HeroController.instance.acceptingInput;
+        }
+
         public void OnTriggerStay2D(Collider2D collider)
         {
             DialogSettings dialog = GetCurrentSettings();
@@ -190,7 +226,7 @@ namespace PronoesProMod.MonoBehaviours
                 {
                     PronoesProMod.Instance.StartInteraction(new Vector3(transform.position.x,transform.position.y,PronoesProMod.Instance.interactionPropt.transform.position.z), dialog.interactionPrompt);
 
-                    if (InputHandler.Instance.inputActions.up.IsPressed && !PronoesProMod.IsGamePaused())
+                    if (InputHandler.Instance.inputActions.up.IsPressed && !PronoesProMod.IsGamePaused() && KnightReady())
                     {
                         PronoesProMod.Instance.ShowDialogBox(dialog.npcSuperName, dialog.npcName, dialog.npcSubName, dialog.conversation, dialog.dialogSounds, dialog.dialogSpeed);
                         PronoesProMod.Instance.ChangeDialogEvents(dialog.onStart, dialog.onContinue, dialog.onEnd);
