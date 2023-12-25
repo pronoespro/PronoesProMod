@@ -3,6 +3,7 @@ using HutongGames.PlayMaker.Actions;
 using JetBrains.Annotations;
 using Modding;
 using PronoesProMod.Extensions;
+using PronoesProMod.Monobehaviors;
 using PronoesProMod.MonoBehaviours;
 using SFCore.Utils;
 using System;
@@ -19,8 +20,39 @@ using UObject = UnityEngine.Object;
 
 namespace PronoesProMod
 {
+
+    [System.Serializable]
+    public struct SpellSwapData
+    {
+        public string spellNameKey,spellDescriptionKey;
+        public int unlockCost;
+        public string coliseumSceneForSpell;
+        public string unlockRequirements;
+        public bool unlocked;
+
+        public SpellSwapData(string _name,string _desc,string _colo,string _requirements,int _cost=10,bool _unlock=false)
+        {
+            spellNameKey = _name;
+            spellDescriptionKey = _desc;
+            coliseumSceneForSpell = _colo;
+            unlockCost = _cost;
+            unlockRequirements = _requirements;
+            unlocked = _unlock;
+        }
+
+        public string GetName(int _spellLevel)
+        {
+            return spellNameKey.Replace("*", _spellLevel.ToString());
+        }
+
+        public string GetDescription(int _spellLevel)
+        {
+            return spellDescriptionKey.Replace("*", _spellLevel.ToString());
+        }
+    }
+
     [UsedImplicitly]
-    public class PronoesProMod : Mod, ITogglableMod,IGlobalSettings<PronoesproGlobalSaveData>, ILocalSettings<PronoesproLocalSaveData>
+    public class PronoesProMod : Mod, ITogglableMod, IGlobalSettings<PronoesproGlobalSaveData>, ILocalSettings<PronoesproLocalSaveData>
     {
 
         #region Variables
@@ -29,53 +61,87 @@ namespace PronoesProMod
         public Dictionary<String, AssetBundle> NPCBundle;
         public Dictionary<String, AssetBundle> soundBundle;
         public Dictionary<String, AssetBundle> skinsBundle;
+        public Dictionary<String, AssetBundle> spritesBundle;
 
-        public Dictionary<string,Dictionary<string, GameObject>> preloadedObjs;
-        public static Satchel.Core satchel =new Satchel.Core();
+        public Dictionary<string, Dictionary<string, GameObject>> preloadedObjs;
+        public static Satchel.Core satchel = new Satchel.Core();
 
-        public List<string> levelsToLoad = new List<string>() { "entrance","createdtown", "appleminigame" };
-        public List<string> objectsToLoad = new List<string>() { "portal","music","ui","brokenobjs", "newattacks" };
-        public List<string> npcsToLoad = new List<string>() { "npcs","dee-coder","de-playtest"};
-        public List<string> skinsToLoad = new List<string>() {"skins" };
+        public List<string> levelsToLoad = new List<string>() { "entrance", "createdtown", "appleminigame" };
+        public List<string> objectsToLoad = new List<string>() { "portal", "music", "ui", "brokenobjs", "newattacks" };
+        public List<string> npcsToLoad = new List<string>() { "npcs", "dee-coder", "de-playtest" };
+        public List<string> skinsToLoad = new List<string>() { "skins", "animations" };
+        public List<string> spritesToLoad = new List<string>() { "charmupgrades" };
         public string soundsToLoad = "sounds";
-
-        public bool hasSwordsSpell, hasShieldSpell, hasTeleportSpell;
-        public int equipedSoulType, equipedDiveType, equipedShriekType;
-
-        public string[] spellNames = new string[] { "SawbladeAttack","NailAttack","AppleAttack","FallingNails","GiantNail", "ShootSawbladeAttack", "NailBarrage", "Dee_explode", "ApplePieSawblade", "AppleSliceAttack", "SawbladeShout", "DeeExplosionParticles" };
-        public Dictionary<string, GameObject> newSpells;
-        public int[] spellUsedTimes;
-        public int[] spellAmmount;
 
         public bool playerFaceLeft;
         public bool playerFalling;
 
         public bool fadedIn;
 
+        //Location icons
+        public string[] locationNames = new string[] { "CraftedTown" };
+        public Dictionary<string, Sprite> locationIcons;
+
         //Spells
         public Dictionary<string, FsmState> ogDiveStates;
-        public string[] ogDiveStateNames = new string[] { "Quake1 Land", "Q2 Land", "Q2 Pillar","Quake1 Down","Quake2 Down","Quake Antic", "Spell End"};
+        public string[] ogDiveStateNames = new string[] { "Quake1 Land", "Q2 Land", "Q2 Pillar", "Quake1 Down", "Quake2 Down", "Quake Antic", "Spell End" };
         public Dictionary<string, FsmState> ogSoulStates;
-        public string[] ogSoulStateNames = new string[] { "Fireball 1", "Fireball 2", "Fireball Recoil"};
+        public string[] ogSoulStateNames = new string[] { "Fireball 1", "Fireball 2", "Fireball Recoil" };
         public Dictionary<string, FsmState> ogShriekStates;
-        public string[] ogShriekStateNames = new string[] {"Scream Antic1", "Scream Antic2", "Scream Burst 1", "Scream Burst 2" };
+        public string[] ogShriekStateNames = new string[] { "Scream Antic1", "Scream Antic2", "Scream Burst 1", "Scream Burst 2" };
 
-        //Charms
-        public Dictionary<string, FsmState> ogCharmStates;
-        public Dictionary<string,Transform> charmSpawns;
-        public Dictionary<string, int> charmProjectileNums;
-        public Transform ogDreamShield;
+        public int equipedSoulType, equipedDiveType, equipedShriekType;
+
+        public string[] spellNames = new string[] { "SawbladeAttack", "NailAttack", "AppleAttack", "FallingNails", "GiantNail", "ShootSawbladeAttack", "NailBarrage", "Dee_explode", "ApplePieSawblade", "AppleSliceAttack", "SawbladeShout", "DeeExplosionParticles" };
+        public Dictionary<string, GameObject> newSpells;
+        public int[] spellUsedTimes;
+        public int[] spellAmmount;
 
         public string[] spellSpriteNames = new string[] { "icon_apple_shriek", "icon_apple_soul", "icon_apple_dive", "icon_def_dive", "icon_def_shriek", "icon_def_soul", "icon_nailmaster_dive", "icon_nailmaster_shriek", "icon_nailmaster_soul", "icon_sawblade_dive", "icon_sawblade_soul", "icon_sawblade_shriek", "icon_pro_soul" };
         public Dictionary<string, Sprite> spellSprites;
+        public SpellSwapData[] unlockableSouls = new SpellSwapData[] {
+            new SpellSwapData("Soul_sawblade_*", "Soul_sawblade_*_desc","","sawblade",50),
+            new SpellSwapData("Soul_nailmaster_*","Soul_nailmaster_*_desc","","nailmaster",30),
+            new SpellSwapData("Soul_apple_*","Soul_apple_*_desc","","apple",75),
+            new SpellSwapData("Soul_Dee_*","Soul_Dee_0_desc","","craftedTownFinished",100)};
+        public SpellSwapData[] unlockableDives = new SpellSwapData[] {
+            new SpellSwapData("Dive_sawblade_*","Dive_sawblade_*_desc","","sawblade",100),
+            new SpellSwapData("Dive_nailmaster_*","Dive_nailmaster_*_desc","","nailmaster",90),
+            new SpellSwapData("Dive_apple_*","Dive_apple_*_desc","","apple",90)
+        };
+        public SpellSwapData[] unlockableShrieks = new SpellSwapData[]{
+            new SpellSwapData("Shriek_sawblade_*","Shriek_sawblade_*_desc","","sawblade",125),
+            new SpellSwapData("Shriek_nailmaster_*","Shriek_nailmaster_*_desc","","nailmaster",100),
+            new SpellSwapData("Shriek_apple_*","Shriek_apple_*_desc","","apple",200)
+            };
+
+        public static string soulInventoryNameKey="INV_NAME_SPELL_FIREBALL",shriekInventoryNameKey= "INV_NAME_SPELL_SCREAM",diveInventoryNameKey= "INV_NAME_SPELL_QUAKE";
+        public static string soulInventoryDescriptionKey= "INV_DESC_SPELL_FIREBALL", shriekInventoryDescriptionKey= "INV_DESC_SPELL_SCREAM", diveInventoryDescriptionKey = "INV_DESC_SPELL_QUAKE";
+
+        //Charms
+        public Dictionary<string, FsmState> ogCharmStates;
+        public Dictionary<string, Transform> charmSpawns;
+        public Dictionary<string, int> charmProjectileNums;
+        public Transform ogDreamShield;
+
+        public Dictionary<string, Sprite> ogCharmSprites;
+
+        //Skin related
+        private bool proSkinUsing;
+        private Dictionary<string, Texture> ogKnightSprite;
 
         //Save Data
-        private bool proSkinUsing;
         private bool proIntroDone;
         private bool loadedKnightPowersAndSkins;
 
+        //Shop related
+        private ProShopUI proShop;
+
+        //Misc animations related
+        private bool knightSpinning;
+
         public static GameObject levelNameDisplay;
-        public static Transform spellChangeUI;
+        public static Transform spellChangeUI, proShopUI;
 
         public int soul, shriek, dive;
 
@@ -83,12 +149,12 @@ namespace PronoesProMod
 
         public static string[] MeleeAttacks = new string[] { "Nail Attack" };
 
-        public void IntroDone(){
+        public void FinishIntro() {
             proIntroDone = true;
         }
 
         public bool IsIntroDone() { return proIntroDone; }
-
+        /*
         public Dictionary<string, string[]> spellNameKeys = new Dictionary<string, string[]>(){
             { "INV_NAME_SPELL_SCREAM1",new string[]{ "Soul_sawblade_0", "Soul_nailmaster_0", "Shriek_apple_0" } },
             { "INV_NAME_SPELL_SCREAM2",new string[]{ "Soul_sawblade_1", "Soul_nailmaster_1", "Shriek_apple_1" } },
@@ -104,7 +170,7 @@ namespace PronoesProMod
             {"INV_DESC_SPELL_FIREBALL2",new string[]{ "Dive_sawblade_1_desc", "Dive_nailmaster_1_desc", "Soul_apple_1_desc", "Soul_Dee_1_desc" }  },
             {"INV_DESC_SPELL_QUAKE1",new string[] { "Shriek_sawblade_0_desc", "Shriek_nailmaster_0_desc", "Dive_apple_0_desc" } },
             {"INV_DESC_SPELL_QUAKE2", new string[]{ "Shriek_sawblade_1_desc", "Shriek_nailmaster_1_desc", "Dive_apple_1_desc" } }
-        };
+        };*/
 
         public List<(string, string)> toPreload = new List<(string, string)>
         {
@@ -123,7 +189,7 @@ namespace PronoesProMod
 
         public InteractionPrompt interactionPropt;
 
-        public static AudioMixer enviroMixer,musicMixer,actorsMixer,masterMixer,atmosMixer;
+        public static AudioMixer enviroMixer, musicMixer, actorsMixer, masterMixer, atmosMixer;
 
         /*
         string UI = "UI";
@@ -152,6 +218,7 @@ namespace PronoesProMod
             levelNameDisplay = null;
             charmSpawns = null;
             loadedKnightPowersAndSkins = fadedIn;
+            ogKnightSprite = null;
         }
 
         public void UnloadCharacterSpecificVariables()
@@ -168,7 +235,7 @@ namespace PronoesProMod
 
         public override string GetVersion()
         {
-            return "Darkness v0.0.13.7";
+            return "Darkness v0.1.0.0";
         }
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
@@ -181,6 +248,7 @@ namespace PronoesProMod
             Instance = this;
 
             preloadedObjs = preloadedObjects;
+            ogKnightSprite = new Dictionary<string, Texture>();
 
             SetupMethods();
             SetupBundles();
@@ -205,6 +273,8 @@ namespace PronoesProMod
             atmosMixer = Resources.FindObjectsOfTypeAll<AudioMixer>().First(x => x.name == "Atmos");
             masterMixer = Resources.FindObjectsOfTypeAll<AudioMixer>().First(x => x.name == "Master");
 
+            InitializeAnimationStuff();
+
         }
 
         public void Unload()
@@ -221,21 +291,133 @@ namespace PronoesProMod
 
             UnloadUI();
 
+            //UnloadAnimationStuff();
+
             Instance = null;
 
         }
+
+        #region knight animation
+
+
+        private Dictionary<string, tk2dFullAnimation> knightAnimations;
+        public tk2dSpriteAnimator heroAnimator;
+        public ProPlayerAnimation playerAnim;
+
+        public void InitializeAnimationStuff()
+        {
+
+            //Setup
+            On.HeroController.Awake += SetupOnlyOnce;
+            On.HeroController.Start += PlayerAnimatorSetup;
+
+
+            On.HeroController.Update += SpinKnightSprite;
+        }
+
+
+        public void UnloadAnimationStuff()
+        {
+            On.HeroController.Awake -= SetupOnlyOnce;
+            On.HeroController.Start -= PlayerAnimatorSetup;
+
+            On.HeroController.Update -= SpinKnightSprite;
+        }
+
+        private void SetupOnlyOnce(On.HeroController.orig_Awake orig, HeroController self)
+        {
+            On.HeroController.Awake -= SetupOnlyOnce;
+
+
+            if (knightAnimations == null)
+            {
+                knightAnimations = new Dictionary<string, tk2dFullAnimation>();
+
+                if (skinsBundle.ContainsKey("animations") && skinsBundle["animations"].Contains("spin"))
+                {
+
+                    Texture2D _tex = skinsBundle["animations"].LoadAsset<Texture2D>("spin");
+                    tk2dSpriteCollectionData _collection = tk2dAuxiliarHelper.CreateCollectionSimple(_tex, HeroController.instance.gameObject, new Vector2(_tex.width / 2 / 8, _tex.height / 4), 8);
+
+                    tk2dFullAnimationData _anim = new tk2dFullAnimationData(_collection,
+                        new tk2dAnimationDataForCreation[] {
+                            new tk2dAnimationDataForCreation("spin", null, new int[] { 0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7}) }
+                        );
+
+                    knightAnimations.Add("spin",
+                        new tk2dFullAnimation("spin", _anim, _collection));
+
+                    Log("Made the spin knight");
+                }
+            }
+
+            orig(self);
+
+            foreach (string key in knightAnimations.Keys)
+            {
+
+                heroAnimator = HeroController.instance.gameObject.GetComponent<tk2dSpriteAnimator>();
+                List<tk2dSpriteAnimationClip> list2 = heroAnimator.Library.clips.ToList<tk2dSpriteAnimationClip>();
+
+                foreach (tk2dSpriteAnimationClip item in tk2dAuxiliarHelper.MakeAnimations(knightAnimations[key].colection, knightAnimations[key].animation.animationData))
+                {
+                    list2.Add(item);
+                }
+                heroAnimator.Library.clips = list2.ToArray();
+
+            }
+
+        }
+
+
+        private void PlayerAnimatorSetup(On.HeroController.orig_Start orig, HeroController self)
+        {
+            if (playerAnim == null)
+            {
+                playerAnim = HeroController.instance.gameObject.AddComponent<ProPlayerAnimation>();
+                playerAnim.heroAnimator = heroAnimator;
+            }
+
+            orig(self);
+        }
+
+        private void SpinKnightSprite(On.HeroController.orig_Update orig, HeroController self)
+        {
+            if (playerAnim != null && knightSpinning)
+            {
+                playerAnim.ChangeAnimation("spin", relinquishControl: true);
+            }
+            orig(self);
+        }
+
+        public void StartSpinningKnight()
+        {
+            knightSpinning = true;
+        }
+
+        public void EndSpinningKnight()
+        {
+            if (playerAnim != null && playerAnim.GetIsDoingAnimation())
+            {
+                playerAnim.ForceEndAnimation();
+            }
+            knightSpinning = false;
+        }
+
+        #endregion
+
         #endregion
 
         #region Bundles
         public void SetupBundles()
         {
 
-
             SceneBundle = new Dictionary<string, AssetBundle>();
             GOBundle = new Dictionary<string, AssetBundle>();
             NPCBundle = new Dictionary<string, AssetBundle>();
             soundBundle = new Dictionary<string, AssetBundle>();
             skinsBundle = new Dictionary<string, AssetBundle>();
+            spritesBundle = new Dictionary<string, AssetBundle>();
 
             Assembly asm = Assembly.GetExecutingAssembly();
             Log("Searching for Levels");
@@ -255,25 +437,25 @@ namespace PronoesProMod
                     string bundleName = Path.GetExtension(res).Substring(1);
                     if (levelsToLoad.Contains(bundleName))
                     {
-                        Log("Found Level "+bundleName);
+                        Log("Found Level " + bundleName);
                         SceneBundle.Add(bundleName, AssetBundle.LoadFromMemory(buffer));
-                    }else if (objectsToLoad.Contains(bundleName))
+                    } else if (objectsToLoad.Contains(bundleName))
                     {
                         GOBundle.Add(bundleName, AssetBundle.LoadFromMemory(buffer));
-                    }else if (npcsToLoad.Contains(bundleName))
+                    } else if (npcsToLoad.Contains(bundleName))
                     {
                         NPCBundle.Add(bundleName, AssetBundle.LoadFromMemory(buffer));
-                    }else if (bundleName == soundsToLoad)
+                    } else if (bundleName == soundsToLoad)
                     {
                         soundBundle.Add(bundleName, AssetBundle.LoadFromMemory(buffer));
-                    }else if (skinsToLoad.Contains(bundleName))
+                    } else if (skinsToLoad.Contains(bundleName))
                     {
                         skinsBundle.Add(bundleName, AssetBundle.LoadFromMemory(buffer));
-                    }
-                    else
+                    } else if (spritesToLoad.Contains(bundleName))
                     {
+                        spritesBundle.Add(bundleName, AssetBundle.LoadFromMemory(buffer));
+                    } else {
                         continue;
-
                     }
 
                 }
@@ -370,9 +552,16 @@ namespace PronoesProMod
             AddSceneLoader();
         }
 
+        public bool KnightReady()
+        {
+            return HeroController.instance.CheckTouchingGround()
+                && Mathf.Abs(HeroController.instance.GetComponent<Rigidbody2D>().velocity.y) < 0.1f
+                && HeroController.instance.acceptingInput;
+        }
+
         public void AddSceneLoader()
         {
-            if (GameManager.instance.GetComponent<SceneLoader>()== null) {
+            if (GameManager.instance.GetComponent<SceneLoader>() == null) {
                 GameManager.instance.gameObject.AddComponent<SceneLoader>();
                 Log("Added Scene Loader");
             }
@@ -420,13 +609,13 @@ namespace PronoesProMod
 
         public static bool HasCharm(int charmNum)
         {
-            return PlayerData.instance.GetBool("equippedCharm_"+charmNum.ToString());
+            return PlayerData.instance.GetBool("equippedCharm_" + charmNum.ToString());
         }
 
         public void UpdateSpellUI()
         {
 
-            if(spellChangeUI==null || spellSprites == null)
+            if (spellChangeUI == null || spellSprites == null)
             {
                 return;
             }
@@ -514,9 +703,9 @@ namespace PronoesProMod
 
         public Vector2 UpDash(Vector2 vel)
         {
-            if (PlayerData.instance.GetBool("equippedCharm_31") && vel.y == 0 && upgradedCharms[0] && Mathf.Abs(HeroController.instance.vertical_input)>0.1f)
+            if (PlayerData.instance.GetBool("equippedCharm_31") && vel.y == 0 && upgradedCharms[0] && Mathf.Abs(HeroController.instance.vertical_input) > 0.1f)
             {
-                return vel*0.75f + new Vector2(0f, Mathf.Abs(vel.x) * 30f * Time.deltaTime);
+                return vel * 0.75f + new Vector2(0f, Mathf.Abs(vel.x) * 30f * Time.deltaTime);
             }
             return vel;
         }
@@ -579,33 +768,115 @@ namespace PronoesProMod
 
         #region Powers and Upgrades
 
+        public int GetCurEquipedSpel(string _type)
+        {
+            switch (_type.ToLower())
+            {
+                default:
+                    return equipedSoulType;
+                case "dive":
+                    return equipedDiveType;
+                case "shriek":
+                    return equipedShriekType;
+            }
+        }
+
         public void InitializeFSM()
         {
             On.HeroController.Awake += ReadySpells;
             On.HeroController.Update += HeroController_Update;
+            On.HeroController.Update += CharmSpriteSwap;
         }
 
         public void UnloadFSM()
         {
             On.HeroController.Awake -= ReadySpells;
             On.HeroController.Update -= HeroController_Update;
+            On.HeroController.Update -= CharmSpriteSwap;
+        }
+
+        private void CharmSpriteSwap(On.HeroController.orig_Update orig, HeroController self)
+        {
+            if (CharmIconList.Instance != null && CharmIconList.Instance.spriteList != null && CharmIconList.Instance.spriteList.Length > 0)
+            {
+                if (ogCharmSprites == null || !ogCharmSprites.ContainsKey("dash"))
+                {
+                    ogCharmSprites = new Dictionary<string, Sprite>();
+                    ogCharmSprites.Add("dash", CharmIconList.Instance.spriteList[31]);
+                    ogCharmSprites.Add("shield", CharmIconList.Instance.spriteList[38]);
+                }
+                if (CharmIconList.Instance != null && CharmIconList.Instance.spriteList != null && spritesBundle.ContainsKey("charmupgrades"))
+                {
+                    if (spritesBundle["charmupgrades"].Contains("dashpro"))
+                    {
+                        CharmIconList.Instance.spriteList[31] = (upgradedCharms[0]) ? spritesBundle["charmupgrades"].LoadAsset<Sprite>("dashpro") : ogCharmSprites["dash"];
+                    }
+                    if (spritesBundle["charmupgrades"].Contains("deeshield"))
+                    {
+                        CharmIconList.Instance.spriteList[38] = (upgradedCharms[1]) ? spritesBundle["charmupgrades"].LoadAsset<Sprite>("deeshield") : ogCharmSprites["shield"];
+                    }
+                }
+            }
+            orig(self);
         }
 
         public void SetKnightProSkin()
         {
             proSkinUsing = true;
             tk2dSprite sprite = HeroController.instance.GetComponent<tk2dSprite>();
-            Texture s = sprite.GetCurrentSpriteDef().material.mainTexture, skin = null;
-
-            if (PronoesProMod.Instance.skinsBundle.ContainsKey("skins"))
-            {
-                skin = PronoesProMod.Instance.skinsBundle["skins"].LoadAsset<Texture>("Gen-Knight");
+            if (sprite != null) {
+                SetSkinOnTK2DSprite(sprite, "Base", "Gen-Knight");
             }
-            sprite.GetCurrentSpriteDef().material.mainTexture = skin;
+            HeroController.instance.gameObject.FindGameObjectInChildren("SD Crystal Burst GL").GetComponent<ParticleSystemRenderer>().material.mainTexture = null;
+            HeroController.instance.gameObject.FindGameObjectInChildren("SD Crystal Burst GR").GetComponent<ParticleSystemRenderer>().material.mainTexture = null;
+            HeroController.instance.gameObject.FindGameObjectInChildren("SD Crystal Burst W").GetComponent<ParticleSystemRenderer>().material.mainTexture = null;
 
             PronoesProMod.Instance.LocalSaveData.proKnightSkin = true;
 
             OnSaveLocal();
+
+        }
+
+        public void SetSkinOnTK2DSprite(tk2dSprite sprite, string name, string skinPartName, bool loadFromOgs = false)
+        {
+            if (sprite == null)
+            {
+                return;
+            }
+
+            Texture s = sprite.GetCurrentSpriteDef().material.mainTexture, skin;
+
+            if (!ogKnightSprite.ContainsKey(name) || ogKnightSprite[name] != null)
+            {
+                return;
+            }
+
+            if (!loadFromOgs)
+            {
+                ogKnightSprite.Add(name, s);
+                if (!PronoesProMod.Instance.skinsBundle.ContainsKey("skins"))
+                {
+                    return;
+                }
+                skin = PronoesProMod.Instance.skinsBundle["skins"].LoadAsset<Texture>(skinPartName);
+            } else {
+                skin = ogKnightSprite[name];
+            }
+            sprite.GetCurrentSpriteDef().material.mainTexture = skin;
+
+        }
+
+        public void RemoveKnightProSkin()
+        {
+            tk2dSprite sprite = HeroController.instance.GetComponent<tk2dSprite>();
+            if (sprite != null)
+            {
+                SetSkinOnTK2DSprite(sprite, "Base", "Gen-Knight", true);
+            }
+            HeroController.instance.gameObject.FindGameObjectInChildren("SD Crystal Burst GL").GetComponent<ParticleSystemRenderer>().material.mainTexture = null;
+            HeroController.instance.gameObject.FindGameObjectInChildren("SD Crystal Burst GR").GetComponent<ParticleSystemRenderer>().material.mainTexture = null;
+            HeroController.instance.gameObject.FindGameObjectInChildren("SD Crystal Burst W").GetComponent<ParticleSystemRenderer>().material.mainTexture = null;
+
         }
 
         #region spells
@@ -618,25 +889,25 @@ namespace PronoesProMod
             Instance.spellUsedTimes = new int[Instance.spellNames.Length];
             Instance.spellAmmount = new int[Instance.spellNames.Length];
 
-            Instance.CreateSpell(0, 1,self,ref Instance.newSpells);
-            Instance.CreateSpell(1, 6,self,ref Instance.newSpells);
-            Instance.CreateSpell(2, 2,self,ref Instance.newSpells);
-            Instance.CreateSpell(3, 1,self,ref Instance.newSpells);
-            Instance.CreateSpell(4, 1,self,ref Instance.newSpells);
-            Instance.CreateSpell(5, 15,self,ref Instance.newSpells);
-            Instance.CreateSpell(6, 6,self,ref Instance.newSpells);
-            Instance.CreateSpell(7, 3,self,ref Instance.newSpells);
-            Instance.CreateSpell(8, 4,self,ref Instance.newSpells);
-            Instance.CreateSpell(9, 20,self,ref Instance.newSpells);
-            Instance.CreateSpell(10, 2,self,ref Instance.newSpells);
+            Instance.CreateSpell(0, 1, self, ref Instance.newSpells);
+            Instance.CreateSpell(1, 6, self, ref Instance.newSpells);
+            Instance.CreateSpell(2, 2, self, ref Instance.newSpells);
+            Instance.CreateSpell(3, 1, self, ref Instance.newSpells);
+            Instance.CreateSpell(4, 1, self, ref Instance.newSpells);
+            Instance.CreateSpell(5, 15, self, ref Instance.newSpells);
+            Instance.CreateSpell(6, 6, self, ref Instance.newSpells);
+            Instance.CreateSpell(7, 3, self, ref Instance.newSpells);
+            Instance.CreateSpell(8, 4, self, ref Instance.newSpells);
+            Instance.CreateSpell(9, 20, self, ref Instance.newSpells);
+            Instance.CreateSpell(10, 2, self, ref Instance.newSpells);
             Instance.CreateSpell(11, 2, self, ref Instance.newSpells);
 
         }
 
-        public void CreateSpell(int type, int ammount, HeroController self, ref Dictionary<string,GameObject> GOList)
+        public void CreateSpell(int type, int ammount, HeroController self, ref Dictionary<string, GameObject> GOList)
         {
-            AudioSource s= self.GetComponent<AudioSource>();
-            
+            AudioSource s = self.GetComponent<AudioSource>();
+
 
             if (GOBundle.ContainsKey("newattacks"))
             {
@@ -652,15 +923,15 @@ namespace PronoesProMod
                     {
                         GameObject spell = GameObject.Instantiate(prefav, self.transform.position, Quaternion.identity);
                         GameObject.DontDestroyOnLoad(spell);
-                        GOList.Add(spellNames[type]+i.ToString(), spell);
-                        DeactivateAfter deact; 
+                        GOList.Add(spellNames[type] + i.ToString(), spell);
+                        DeactivateAfter deact;
                         SawbladeAttack saw;
 
-                        foreach(AudioSource audio in spell.GetComponents<AudioSource>())
+                        foreach (AudioSource audio in spell.GetComponents<AudioSource>())
                         {
                             audio.outputAudioMixerGroup = s.outputAudioMixerGroup;
                         }
-                        foreach(AudioSource audio in spell.GetComponentsInChildren<AudioSource>())
+                        foreach (AudioSource audio in spell.GetComponentsInChildren<AudioSource>())
                         {
                             audio.outputAudioMixerGroup = s.outputAudioMixerGroup;
                         }
@@ -668,13 +939,13 @@ namespace PronoesProMod
                         switch (type)
                         {
                             case 0:
-                                saw= spell.AddComponent<SawbladeAttack>();
+                                saw = spell.AddComponent<SawbladeAttack>();
                                 saw.dmgs = new List<DamageEnemies>();
-                                for(int c = 0; c < spell.transform.childCount; c++)
+                                for (int c = 0; c < spell.transform.childCount; c++)
                                 {
-                                    dmg=spell.transform.GetChild(c).gameObject.AddComponent<DamageEnemies>();
+                                    dmg = spell.transform.GetChild(c).gameObject.AddComponent<DamageEnemies>();
                                     saw.dmgs.Add(dmg);
-                                    dmg.damageDealt = Math.Max(1, PlayerData.instance.nailDamage/10);
+                                    dmg.damageDealt = Math.Max(1, PlayerData.instance.nailDamage / 10);
                                     dmg.circleDirection = true;
                                     dmg.attackType = AttackTypes.Spell;
                                     dmg.ignoreInvuln = true;
@@ -702,7 +973,7 @@ namespace PronoesProMod
                                 dmg.ignoreInvuln = false;
                                 dmg.magnitudeMult = 1;
 
-                                apple=dmg.gameObject.AddComponent<AppleAttack>();
+                                apple = dmg.gameObject.AddComponent<AppleAttack>();
                                 apple.targetGO = spell;
 
                                 break;
@@ -718,12 +989,12 @@ namespace PronoesProMod
                                 }
                                 break;
                             case 4:
-                                deact=spell.AddComponent<DeactivateAfter>();
+                                deact = spell.AddComponent<DeactivateAfter>();
                                 deact.timer = 0.75f;
 
                                 dmg = spell.transform.GetChild(0).gameObject.AddComponent<DamageEnemies>();
                                 dmg.damageDealt = Math.Max(1, PlayerData.instance.nailDamage);
-                                dmg.direction = 0 ;
+                                dmg.direction = 0;
                                 dmg.attackType = AttackTypes.Nail;
                                 dmg.magnitudeMult = 1;
                                 dmg.ignoreInvuln = false;
@@ -750,8 +1021,8 @@ namespace PronoesProMod
                                 break;
                             case 6:
 
-                                deact= spell.AddComponent<DeactivateAfter>();
-                                deact.timer =0.5f;
+                                deact = spell.AddComponent<DeactivateAfter>();
+                                deact.timer = 0.5f;
 
                                 for (int c = 0; c < spell.transform.childCount; c++)
                                 {
@@ -766,7 +1037,7 @@ namespace PronoesProMod
                             case 7:
 
                                 dmg = spell.transform.GetChild(0).gameObject.AddComponent<DamageEnemies>();
-                                dmg.damageDealt = PlayerData.instance.nailDamage*2;
+                                dmg.damageDealt = PlayerData.instance.nailDamage * 2;
                                 dmg.attackType = AttackTypes.Spell;
                                 dmg.ignoreInvuln = false;
                                 dmg.magnitudeMult = 0.1f;
@@ -792,12 +1063,12 @@ namespace PronoesProMod
                                 deact.timer = 3f;
 
                                 dmg = spell.transform.GetChild(0).gameObject.AddComponent<DamageEnemies>();
-                                dmg.damageDealt = PlayerData.instance.nailDamage/10;
+                                dmg.damageDealt = PlayerData.instance.nailDamage / 10;
                                 dmg.attackType = AttackTypes.Spell;
                                 dmg.ignoreInvuln = false;
                                 dmg.magnitudeMult = 1f;
 
-                                apple=dmg.gameObject.AddComponent<AppleAttack>();
+                                apple = dmg.gameObject.AddComponent<AppleAttack>();
                                 apple.targetGO = spell;
                                 break;
                             case 10:
@@ -819,13 +1090,13 @@ namespace PronoesProMod
                                 }
                                 break;
                             case 11:
-                                dmg= spell.AddComponent<DamageEnemies>();
+                                dmg = spell.AddComponent<DamageEnemies>();
                                 dmg.attackType = AttackTypes.Spell;
                                 dmg.circleDirection = true;
                                 dmg.damageDealt = 15;
                                 dmg.ignoreInvuln = true;
 
-                                heroDmg= spell.AddComponent<DamageHero>();
+                                heroDmg = spell.AddComponent<DamageHero>();
                                 heroDmg.damageDealt = 1;
                                 heroDmg.shadowDashHazard = false;
 
@@ -874,7 +1145,7 @@ namespace PronoesProMod
 
         }
 
-        public int diveType,soulType,shriekType;
+        public int diveType, soulType, shriekType;
 
         public void SpellSwap(PlayMakerFSM fsm)
         {
@@ -902,30 +1173,38 @@ namespace PronoesProMod
                     if (diveType != 1)
                     {
                         RestoreDive(fsm);
-                        Log("Super dive with sawblades!");
-                        if (newSpells.ContainsKey(spellNames[0] + "0"))
+                        if (unlockableDives[equipedDiveType-1].unlocked)
                         {
-                            Log("Sawblades!");
-                            fsm.RemoveAction("Quake1 Land", 12);
-                            fsm.InsertMethod("Quake1 Land", () =>
+                            Log("Super dive with sawblades!");
+                            if (newSpells.ContainsKey(spellNames[0] + "0"))
                             {
-                                createdSpell= ActivateSpell(0);
-                                createdSpell.transform.localScale = new Vector3(1, 1, 1);
-                                createdSpell.SendMessage("SetCollisionsMultiplier", 1f);
-                                Log("It should work...");
-                            }, 12);
+                                Log("Sawblades!");
+                                fsm.RemoveAction("Quake1 Land", 12);
+                                fsm.InsertMethod("Quake1 Land", () =>
+                                {
+                                    createdSpell = ActivateSpell(0);
+                                    createdSpell.transform.localScale = new Vector3(1, 1, 1);
+                                    createdSpell.SendMessage("SetCollisionsMultiplier", 1f);
+                                    Log("It should work...");
+                                }, 12);
 
-                            fsm.RemoveAction("Q2 Land", 11);
-                            fsm.InsertMethod("Q2 Land", () =>
-                            {
-                                createdSpell=ActivateSpell(0);
-                                createdSpell.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
-                                createdSpell.SendMessage("SetCollisionsMultiplier", 2f);
-                                Log("It should work...");
-                            }, 11);
-                            fsm.RemoveAction("Q2 Land", 8);
-                            fsm.RemoveAction("Q2 Pillar", 3);
-                            fsm.RemoveAction("Q2 Pillar", 2);
+                                fsm.RemoveAction("Q2 Land", 11);
+                                fsm.InsertMethod("Q2 Land", () =>
+                                {
+                                    createdSpell = ActivateSpell(0);
+                                    createdSpell.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
+                                    createdSpell.SendMessage("SetCollisionsMultiplier", 2f);
+                                    Log("It should work...");
+                                }, 11);
+                                fsm.RemoveAction("Q2 Land", 8);
+                                fsm.RemoveAction("Q2 Pillar", 3);
+                                fsm.RemoveAction("Q2 Pillar", 2);
+                            }
+                        }
+                        else
+                        {
+                            Log("Can't use, not unlocked");
+                            equipedDiveType = 2;
                         }
                         diveType = 1;
                     }
@@ -934,40 +1213,50 @@ namespace PronoesProMod
                     if (diveType != 2)
                     {
                         RestoreDive(fsm);
-                        Log("Nailmaster dive!");
-                        if (newSpells.ContainsKey(spellNames[0] + "0"))
+                        if (unlockableDives[equipedDiveType-1].unlocked)
                         {
-
-                            fsm.InsertMethod("Quake Antic", () => {
-                                playerFalling = true;
-                                createdSpell = ActivateSpell(3);
-                                createdSpell.GetComponent<AudioSource>().Play();
-                            }, 2);
-
-                            Log("Flying Nails!");
-
-                            fsm.InsertMethod("Quake1 Land", () =>
+                            Log("Nailmaster dive!");
+                            if (newSpells.ContainsKey(spellNames[0] + "0"))
                             {
-                                playerFalling = false;
-                            }, 11);
 
-                            fsm.RemoveAction("Q2 Land", 11);
-                            fsm.InsertMethod("Q2 Land", () =>
-                            {
-                                playerFalling = false;
-                                createdSpell=ActivateSpell(4);
-                                createdSpell.transform.position = HeroController.instance.transform.position+new Vector3(0,-1f,0);
-                                createdSpell.GetComponent<Animator>().SetTrigger("Appear");
-                                createdSpell.GetComponent<AudioSource>().Play();
-                                Log("It should work...");
-                            }, 11);
-                            fsm.RemoveAction("Q2 Land", 8);
-                            fsm.RemoveAction("Q2 Pillar", 3);
-                            fsm.RemoveAction("Q2 Pillar", 2);
+                                fsm.InsertMethod("Quake Antic", () =>
+                                {
+                                    playerFalling = true;
+                                    createdSpell = ActivateSpell(3);
+                                    createdSpell.GetComponent<AudioSource>().Play();
+                                }, 2);
 
-                            fsm.AddMethod("Spell End", () => {
-                                playerFalling = false;
-                            });
+                                Log("Flying Nails!");
+
+                                fsm.InsertMethod("Quake1 Land", () =>
+                                {
+                                    playerFalling = false;
+                                }, 11);
+
+                                fsm.RemoveAction("Q2 Land", 11);
+                                fsm.InsertMethod("Q2 Land", () =>
+                                {
+                                    playerFalling = false;
+                                    createdSpell = ActivateSpell(4);
+                                    createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, -1f, 0);
+                                    createdSpell.GetComponent<Animator>().SetTrigger("Appear");
+                                    createdSpell.GetComponent<AudioSource>().Play();
+                                    Log("It should work...");
+                                }, 11);
+                                fsm.RemoveAction("Q2 Land", 8);
+                                fsm.RemoveAction("Q2 Pillar", 3);
+                                fsm.RemoveAction("Q2 Pillar", 2);
+
+                                fsm.AddMethod("Spell End", () =>
+                                {
+                                    playerFalling = false;
+                                });
+                            }
+                        }
+                        else
+                        {
+                            Log("Can't use, not unlocked");
+                            equipedDiveType = 3;
                         }
                         diveType = 2;
                     }
@@ -976,44 +1265,52 @@ namespace PronoesProMod
                     if (diveType != 3)
                     {
                         RestoreDive(fsm);
-                        Log("Nailmaster dive!");
-                        if (newSpells.ContainsKey(spellNames[0] + "0"))
+                        if (unlockableDives[equipedDiveType-1].unlocked)
                         {
-
-                            Log("Apple Pies!");
-
-                            fsm.RemoveAction("Quake1 Land", 11);
-                            fsm.InsertMethod("Quake1 Land", () =>
+                            Log("Nailmaster dive!");
+                            if (newSpells.ContainsKey(spellNames[0] + "0"))
                             {
-                                createdSpell = ActivateSpell(8);
-                                createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, -1f, 0);
-                                createdSpell.GetComponentInChildren<Animator>().SetTrigger("Appear");
-                                createdSpell.transform.localScale = new Vector3(-Mathf.Abs(createdSpell.transform.localScale.x)/2f, 0.5f, 0.5f);
 
-                                createdSpell = ActivateSpell(8);
-                                createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, -1f, 0);
-                                createdSpell.GetComponentInChildren<Animator>().SetTrigger("Appear");
-                                createdSpell.transform.localScale = new Vector3(-Mathf.Abs(createdSpell.transform.localScale.x)/2f, 0.5f, 0.5f);
-                            }, 11);
+                                Log("Apple Pies!");
 
-                            fsm.RemoveAction("Q2 Land", 11);
-                            fsm.InsertMethod("Q2 Land", () =>
-                            {
-                                createdSpell = ActivateSpell(8);
-                                createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, -1f, 0);
-                                createdSpell.GetComponentInChildren<Animator>().SetTrigger("Appear");
+                                fsm.RemoveAction("Quake1 Land", 11);
+                                fsm.InsertMethod("Quake1 Land", () =>
+                                {
+                                    createdSpell = ActivateSpell(8);
+                                    createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, -1f, 0);
+                                    createdSpell.GetComponentInChildren<Animator>().SetTrigger("Appear");
+                                    createdSpell.transform.localScale = new Vector3(-Mathf.Abs(createdSpell.transform.localScale.x) / 2f, 0.5f, 0.5f);
 
-                                createdSpell = ActivateSpell(8);
-                                createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, -1f, 0);
-                                createdSpell.GetComponentInChildren<Animator>().SetTrigger("Appear");
-                                createdSpell.transform.localScale = new Vector3(-Mathf.Abs(createdSpell.transform.localScale.x), 1, 1);
-                                Log("It should work...");
-                            }, 11);
+                                    createdSpell = ActivateSpell(8);
+                                    createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, -1f, 0);
+                                    createdSpell.GetComponentInChildren<Animator>().SetTrigger("Appear");
+                                    createdSpell.transform.localScale = new Vector3(-Mathf.Abs(createdSpell.transform.localScale.x) / 2f, 0.5f, 0.5f);
+                                }, 11);
 
-                            fsm.RemoveAction("Q2 Land", 8);
-                            fsm.RemoveAction("Q2 Pillar", 3);
-                            fsm.RemoveAction("Q2 Pillar", 2);
+                                fsm.RemoveAction("Q2 Land", 11);
+                                fsm.InsertMethod("Q2 Land", () =>
+                                {
+                                    createdSpell = ActivateSpell(8);
+                                    createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, -1f, 0);
+                                    createdSpell.GetComponentInChildren<Animator>().SetTrigger("Appear");
 
+                                    createdSpell = ActivateSpell(8);
+                                    createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, -1f, 0);
+                                    createdSpell.GetComponentInChildren<Animator>().SetTrigger("Appear");
+                                    createdSpell.transform.localScale = new Vector3(-Mathf.Abs(createdSpell.transform.localScale.x), 1, 1);
+                                    Log("It should work...");
+                                }, 11);
+
+                                fsm.RemoveAction("Q2 Land", 8);
+                                fsm.RemoveAction("Q2 Pillar", 3);
+                                fsm.RemoveAction("Q2 Pillar", 2);
+
+                            }
+                        }
+                        else
+                        {
+                            Log("Can't use, not unlocked");
+                            equipedDiveType = 0;
                         }
                         diveType = 3;
                     }
@@ -1043,85 +1340,98 @@ namespace PronoesProMod
                     if (soulType != 1)
                     {
                         RestoreSoul(fsm);
-                        Log("Sawblade soul!");
-
-                        fsm.RemoveAction("Fireball 1", 3);
-                        fsm.InsertMethod("Fireball 1", () =>
+                        if (unlockableSouls[equipedSoulType-1].unlocked)
                         {
-                            createdSpell = ActivateSpell(5);
-                            createdSpell.transform.position = HeroController.instance.transform.position;
-                            createdSpell.GetComponent<AudioSource>().Play();
-                            createdSpell.SendMessage("ChangeMoveDir", new Vector2(playerFaceLeft ? 1 : -1, 3));
-                        }, 3);
+                            Log("Sawblade soul!");
 
-                        fsm.RemoveAction("Fireball 2", 3);
-                        fsm.InsertMethod("Fireball 2", () =>
-                        {
-                            createdSpell = ActivateSpell(5);
-                            createdSpell.transform.position = HeroController.instance.transform.position;
-                            createdSpell.GetComponent<AudioSource>().Play();
-                            createdSpell.SendMessage("ChangeMoveDir", new Vector2(-1, 3));
+                            fsm.RemoveAction("Fireball 1", 3);
+                            fsm.InsertMethod("Fireball 1", () =>
+                            {
+                                createdSpell = ActivateSpell(5);
+                                createdSpell.transform.position = HeroController.instance.transform.position;
+                                createdSpell.GetComponent<AudioSource>().Play();
+                                createdSpell.SendMessage("ChangeMoveDir", new Vector2(playerFaceLeft ? 1 : -1, 3));
+                            }, 3);
 
-                            createdSpell = ActivateSpell(5);
-                            createdSpell.transform.position = HeroController.instance.transform.position;
-                            createdSpell.GetComponent<AudioSource>().Play();
-                            createdSpell.SendMessage("ChangeMoveDir", new Vector2(1, 3));
-                            createdSpell.SendMessage("ChangeRotateDir", -90);
-                        }, 3);
+                            fsm.RemoveAction("Fireball 2", 3);
+                            fsm.InsertMethod("Fireball 2", () =>
+                            {
+                                createdSpell = ActivateSpell(5);
+                                createdSpell.transform.position = HeroController.instance.transform.position;
+                                createdSpell.GetComponent<AudioSource>().Play();
+                                createdSpell.SendMessage("ChangeMoveDir", new Vector2(-1, 3));
 
-                        fsm.RemoveAction("Fireball Recoil", 9);
-                        soulType = 1;
+                                createdSpell = ActivateSpell(5);
+                                createdSpell.transform.position = HeroController.instance.transform.position;
+                                createdSpell.GetComponent<AudioSource>().Play();
+                                createdSpell.SendMessage("ChangeMoveDir", new Vector2(1, 3));
+                                createdSpell.SendMessage("ChangeRotateDir", -90);
+                            }, 3);
+
+                            fsm.RemoveAction("Fireball Recoil", 9);
+                        }
                     }
+                    else{
+                        Log("Not bought :C");
+                        equipedSoulType = 2;
+                    }
+                            soulType = 1;
                     break;
                 case 2:
                     if (soulType != 2)
                     {
                         RestoreSoul(fsm);
-                        Log("Nailmaster soul!");
-
-                        fsm.RemoveAction("Fireball 1", 3);
-                        fsm.InsertMethod("Fireball 1", () =>
+                        if (unlockableSouls[equipedSoulType-1].unlocked)
                         {
-                            createdSpell = ActivateSpell(1);
-                            createdSpell.GetComponent<AudioSource>().Play();
-                            FlyingNailAttack fly = createdSpell.GetComponent<FlyingNailAttack>();
-                            fly.destination = HeroController.instance.transform.position + new Vector3((playerFaceLeft ? -1 : 1) * 5, 0);
-                            fly.flyDirection = new Vector2((playerFaceLeft ? 1 : -1) * 10, 5);
+                            Log("Nailmaster soul!");
 
-                            createdSpell = ActivateSpell(1);
-                            fly = createdSpell.GetComponent<FlyingNailAttack>();
-                            fly.destination = HeroController.instance.transform.position + new Vector3((playerFaceLeft ? -1 : 1) * 5, 0);
-                            fly.flyDirection = new Vector2((playerFaceLeft ? 1 : -1) * 10, 0);
+                            fsm.RemoveAction("Fireball 1", 3);
+                            fsm.InsertMethod("Fireball 1", () =>
+                            {
+                                createdSpell = ActivateSpell(1);
+                                createdSpell.GetComponent<AudioSource>().Play();
+                                FlyingNailAttack fly = createdSpell.GetComponent<FlyingNailAttack>();
+                                fly.destination = HeroController.instance.transform.position + new Vector3((playerFaceLeft ? -1 : 1) * 5, 0);
+                                fly.flyDirection = new Vector2((playerFaceLeft ? 1 : -1) * 10, 5);
 
-                            createdSpell = ActivateSpell(1);
-                            fly = createdSpell.GetComponent<FlyingNailAttack>();
-                            fly.destination = HeroController.instance.transform.position + new Vector3((playerFaceLeft ? -1 : 1) * 5, 0);
-                            fly.flyDirection = new Vector2((playerFaceLeft ? 1 : -1) * 10, -5);
-                        }, 3);
+                                createdSpell = ActivateSpell(1);
+                                fly = createdSpell.GetComponent<FlyingNailAttack>();
+                                fly.destination = HeroController.instance.transform.position + new Vector3((playerFaceLeft ? -1 : 1) * 5, 0);
+                                fly.flyDirection = new Vector2((playerFaceLeft ? 1 : -1) * 10, 0);
 
-                        fsm.RemoveAction("Fireball 2", 3);
-                        fsm.InsertMethod("Fireball 2", () =>
+                                createdSpell = ActivateSpell(1);
+                                fly = createdSpell.GetComponent<FlyingNailAttack>();
+                                fly.destination = HeroController.instance.transform.position + new Vector3((playerFaceLeft ? -1 : 1) * 5, 0);
+                                fly.flyDirection = new Vector2((playerFaceLeft ? 1 : -1) * 10, -5);
+                            }, 3);
+
+                            fsm.RemoveAction("Fireball 2", 3);
+                            fsm.InsertMethod("Fireball 2", () =>
+                            {
+                                createdSpell = ActivateSpell(1);
+                                createdSpell.GetComponent<AudioSource>().Play();
+                                FlyingNailAttack fly = createdSpell.GetComponent<FlyingNailAttack>();
+                                fly.destination = HeroController.instance.transform.position + new Vector3((playerFaceLeft ? -1 : 1) * 15, 0);
+                                fly.flyDirection = new Vector2((playerFaceLeft ? 1 : -1) * 30, 15);
+
+                                createdSpell = ActivateSpell(1);
+                                fly = createdSpell.GetComponent<FlyingNailAttack>();
+                                fly.destination = HeroController.instance.transform.position + new Vector3((playerFaceLeft ? -1 : 1) * 15, 0);
+                                fly.flyDirection = new Vector2((playerFaceLeft ? 1 : -1) * 30, 0);
+
+                                createdSpell = ActivateSpell(1);
+                                fly = createdSpell.GetComponent<FlyingNailAttack>();
+                                fly.destination = HeroController.instance.transform.position + new Vector3((playerFaceLeft ? -1 : 1) * 15, 0);
+                                fly.flyDirection = new Vector2((playerFaceLeft ? 1 : -1) * 30, -15);
+
+                            }, 3);
+
+                            fsm.RemoveAction("Fireball Recoil", 9);
+                        }else
                         {
-                            createdSpell = ActivateSpell(1);
-                            createdSpell.GetComponent<AudioSource>().Play();
-                            FlyingNailAttack fly = createdSpell.GetComponent<FlyingNailAttack>();
-                            fly.destination = HeroController.instance.transform.position + new Vector3((playerFaceLeft ? -1 : 1) * 15, 0);
-                            fly.flyDirection = new Vector2((playerFaceLeft ? 1 : -1) * 30, 15);
-
-                            createdSpell = ActivateSpell(1);
-                            fly = createdSpell.GetComponent<FlyingNailAttack>();
-                            fly.destination = HeroController.instance.transform.position + new Vector3((playerFaceLeft ? -1 : 1) * 15, 0);
-                            fly.flyDirection = new Vector2((playerFaceLeft ? 1 : -1) * 30, 0);
-
-                            createdSpell = ActivateSpell(1);
-                            fly = createdSpell.GetComponent<FlyingNailAttack>();
-                            fly.destination = HeroController.instance.transform.position + new Vector3((playerFaceLeft ? -1 : 1) * 15, 0);
-                            fly.flyDirection = new Vector2((playerFaceLeft ? 1 : -1) * 30, -15);
-
-                        }, 3);
-
-                        fsm.RemoveAction("Fireball Recoil", 9);
-
+                            Log("Not bought :C");
+                            equipedSoulType = 3;
+                        }
                         soulType = 2;
                     }
                     break;
@@ -1129,40 +1439,48 @@ namespace PronoesProMod
                     if (soulType != 3)
                     {
                         RestoreSoul(fsm);
-                        Log("Apple slices for everyone!");
-
-                        fsm.RemoveAction("Fireball 1", 3);
-                        fsm.InsertMethod("Fireball 1", () =>
+                        if (unlockableSouls[equipedSoulType-1].unlocked)
                         {
-                            for (int i = 0; i < 2; i++)
+                            Log("Apple slices for everyone!");
+
+                            fsm.RemoveAction("Fireball 1", 3);
+                            fsm.InsertMethod("Fireball 1", () =>
                             {
-                                createdSpell = ActivateSpell(9);
+                                for (int i = 0; i < 2; i++)
+                                {
+                                    createdSpell = ActivateSpell(9);
 
-                                createdSpell.transform.position = HeroController.instance.transform.position;
-                                createdSpell.GetComponent<Rigidbody2D>().velocity = new Vector2((playerFaceLeft ? -1 : 1) * UnityEngine.Random.Range(3f, 7f), 1);
-                                createdSpell.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-                                createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
-                                createdSpell.transform.GetChild(0).rotation = Quaternion.Euler(0, 0, UnityEngine.Random.Range(-360, 360));
-                            }
-                        }, 3);
+                                    createdSpell.transform.position = HeroController.instance.transform.position;
+                                    createdSpell.GetComponent<Rigidbody2D>().velocity = new Vector2((playerFaceLeft ? -1 : 1) * UnityEngine.Random.Range(3f, 7f), 1);
+                                    createdSpell.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+                                    createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
+                                    createdSpell.transform.GetChild(0).rotation = Quaternion.Euler(0, 0, UnityEngine.Random.Range(-360, 360));
+                                }
+                            }, 3);
 
-                        fsm.RemoveAction("Fireball 2", 3);
-                        fsm.InsertMethod("Fireball 2", () =>
+                            fsm.RemoveAction("Fireball 2", 3);
+                            fsm.InsertMethod("Fireball 2", () =>
+                            {
+                                for (int i = 0; i < 5; i++)
+                                {
+                                    createdSpell = ActivateSpell(9);
+
+                                    createdSpell.transform.position = HeroController.instance.transform.position;
+                                    createdSpell.GetComponent<Rigidbody2D>().velocity = new Vector2((playerFaceLeft ? -1 : 1) * UnityEngine.Random.Range(7f, 15f), 1);
+                                    createdSpell.transform.localScale = new Vector3(1, 1, 1);
+                                    createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
+                                    createdSpell.transform.GetChild(0).rotation = Quaternion.Euler(0, 0, UnityEngine.Random.Range(-360, 360));
+                                }
+
+                            }, 3);
+
+                            fsm.RemoveAction("Fireball Recoil", 9);
+                        }
+                        else
                         {
-                            for (int i = 0; i < 5; i++)
-                            {
-                                createdSpell = ActivateSpell(9);
-
-                                createdSpell.transform.position = HeroController.instance.transform.position;
-                                createdSpell.GetComponent<Rigidbody2D>().velocity = new Vector2((playerFaceLeft ? -1 : 1)*UnityEngine.Random.Range(7f,15f), 1);
-                                createdSpell.transform.localScale = new Vector3(1, 1, 1);
-                                createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
-                                createdSpell.transform.GetChild(0).rotation = Quaternion.Euler(0, 0, UnityEngine.Random.Range(-360, 360));
-                            }
-
-                        }, 3);
-
-                        fsm.RemoveAction("Fireball Recoil", 9);
+                            Log("Not bought :C");
+                            equipedSoulType = 4;
+                        }
                         soulType = 3;
                     }
                     break;
@@ -1170,46 +1488,56 @@ namespace PronoesProMod
                     if (soulType != 4)
                     {
                         RestoreSoul(fsm);
-                        Log("Dee-mon souls!");
 
-                        fsm.RemoveAction("Fireball 1", 3);
-                        fsm.InsertMethod("Fireball 1", () =>
+                        if (unlockableSouls[equipedSoulType-1].unlocked)
                         {
-                            createdSpell = ActivateSpell(7);
-                            createdSpell.transform.position = HeroController.instance.transform.position;
-                            createdSpell.GetComponentInChildren<ParticleSystem>().Play();
+                            Log("Dee-mon souls!");
+
+                            fsm.RemoveAction("Fireball 1", 3);
+                            fsm.InsertMethod("Fireball 1", () =>
+                            {
+                                createdSpell = ActivateSpell(7);
+                                createdSpell.transform.position = HeroController.instance.transform.position;
+                                createdSpell.GetComponentInChildren<ParticleSystem>().Play();
                             //createdSpell.GetComponent<AudioSource>().Play();
                             createdSpell.transform.GetChild(0).gameObject.SetActive(true);
-                            createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
-                            createdSpell.transform.localScale = new Vector3(playerFaceLeft ? -1 : 1, 1, 1);
+                                createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
+                                createdSpell.transform.localScale = new Vector3(playerFaceLeft ? -1 : 1, 1, 1);
 
-                            DeeExplosionAttack atk = createdSpell.transform.GetChild(0).GetComponent<DeeExplosionAttack>();
-                            if (atk != null){
-                                atk.ChangeMoveDir(new Vector2(playerFaceLeft ? 7f : -7f, 3f));
-                                atk.ResetAttack();
-                            }
-                        }, 3);
+                                DeeExplosionAttack atk = createdSpell.transform.GetChild(0).GetComponent<DeeExplosionAttack>();
+                                if (atk != null)
+                                {
+                                    atk.ChangeMoveDir(new Vector2(playerFaceLeft ? 7f : -7f, 3f));
+                                    atk.ResetAttack();
+                                }
+                            }, 3);
 
-                        fsm.RemoveAction("Fireball 2", 3);
-                        fsm.InsertMethod("Fireball 2", () =>
-                        {
+                            fsm.RemoveAction("Fireball 2", 3);
+                            fsm.InsertMethod("Fireball 2", () =>
+                            {
 
-                            createdSpell = ActivateSpell(7);
-                            createdSpell.transform.position = HeroController.instance.transform.position;
-                            createdSpell.GetComponentInChildren<ParticleSystem>().Play();
+                                createdSpell = ActivateSpell(7);
+                                createdSpell.transform.position = HeroController.instance.transform.position;
+                                createdSpell.GetComponentInChildren<ParticleSystem>().Play();
                             //createdSpell.GetComponent<AudioSource>().Play();
                             createdSpell.transform.GetChild(0).gameObject.SetActive(true);
-                            createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
-                            createdSpell.transform.localScale = new Vector3(playerFaceLeft ? -1 : 1, 1, 1);
+                                createdSpell.transform.GetChild(0).localPosition = Vector3.zero;
+                                createdSpell.transform.localScale = new Vector3(playerFaceLeft ? -1 : 1, 1, 1);
 
-                            DeeExplosionAttack atk = createdSpell.transform.GetChild(0).GetComponent<DeeExplosionAttack>();
-                            if (atk != null){
-                                atk.ChangeMoveDir(new Vector2(playerFaceLeft ? 7f : -7f, 3f));
-                                atk.ResetAttack();
-                            }
-                        }, 3);
+                                DeeExplosionAttack atk = createdSpell.transform.GetChild(0).GetComponent<DeeExplosionAttack>();
+                                if (atk != null)
+                                {
+                                    atk.ChangeMoveDir(new Vector2(playerFaceLeft ? 7f : -7f, 3f));
+                                    atk.ResetAttack();
+                                }
+                            }, 3);
 
-                        fsm.RemoveAction("Fireball Recoil", 9);
+                            fsm.RemoveAction("Fireball Recoil", 9);
+                        }else
+                        {
+                            Log("Dee is not by your side yet, but maybe some day!");
+                            equipedSoulType = 0;
+                        }
                         soulType = 4;
                     }
                     break;
@@ -1238,42 +1566,50 @@ namespace PronoesProMod
                     if (shriekType != 1)
                     {
                         RestoreShriek(fsm);
-                        Log("Sawblade shriek!");
+                        if (unlockableShrieks[equipedShriekType - 1].unlocked)
+                        {
+                            Log("Sawblade shriek!");
 
-                        fsm.RemoveAction("Scream Burst 1", 7);
-                        fsm.RemoveAction("Scream Burst 1", 6);
+                            fsm.RemoveAction("Scream Burst 1", 7);
+                            fsm.RemoveAction("Scream Burst 1", 6);
 
-                        fsm.RemoveAction("Scream Burst 1", 2);
-                        fsm.InsertMethod("Scream Burst 1", () => {
-                            createdSpell = ActivateSpell(10);
-
-                            if (createdSpell.activeInHierarchy)
+                            fsm.RemoveAction("Scream Burst 1", 2);
+                            fsm.InsertMethod("Scream Burst 1", () =>
                             {
-                                createdSpell.SetActive(false);
-                            }
+                                createdSpell = ActivateSpell(10);
 
-                            createdSpell.SetActive(true);
-                            createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, 2, 0);
-                            createdSpell.GetComponent<Animator>().SetInteger("shoutLvl", 0);
-                        }, 2);
+                                if (createdSpell.activeInHierarchy)
+                                {
+                                    createdSpell.SetActive(false);
+                                }
 
-                        fsm.RemoveAction("Scream Burst 2", 8);
-                        fsm.RemoveAction("Scream Burst 2", 7);
+                                createdSpell.SetActive(true);
+                                createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, 2, 0);
+                                createdSpell.GetComponent<Animator>().SetInteger("shoutLvl", 0);
+                            }, 2);
 
-                        fsm.RemoveAction("Scream Burst 2", 3);
-                        fsm.InsertMethod("Scream Burst 2", () => {
-                            createdSpell = ActivateSpell(10);
+                            fsm.RemoveAction("Scream Burst 2", 8);
+                            fsm.RemoveAction("Scream Burst 2", 7);
 
-                            if (createdSpell.activeInHierarchy)
+                            fsm.RemoveAction("Scream Burst 2", 3);
+                            fsm.InsertMethod("Scream Burst 2", () =>
                             {
-                                createdSpell.SetActive(false);
-                            }
+                                createdSpell = ActivateSpell(10);
 
-                            createdSpell.SetActive(true);
+                                if (createdSpell.activeInHierarchy)
+                                {
+                                    createdSpell.SetActive(false);
+                                }
 
-                            createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, 2, 0);
-                            createdSpell.GetComponent<Animator>().SetInteger("shoutLvl", 1);
-                        }, 3);
+                                createdSpell.SetActive(true);
+
+                                createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, 2, 0);
+                                createdSpell.GetComponent<Animator>().SetInteger("shoutLvl", 1);
+                            }, 3);
+                        }else{
+                            Log("Can't scream that way, not bought the vocal chords to do it");
+                            equipedShriekType = 2;
+                        }
                         shriekType = 1;
                     }
                     break;
@@ -1281,37 +1617,46 @@ namespace PronoesProMod
                     if (shriekType != 2)
                     {
                         RestoreShriek(fsm);
-                        Log("Nailmaster shriek!");
 
-                        fsm.RemoveAction("Scream Burst 1", 7);
-                        fsm.RemoveAction("Scream Burst 1", 6);
+                        if (unlockableShrieks[equipedShriekType - 1].unlocked)
+                        {
+                            Log("Nailmaster shriek!");
 
-                        fsm.RemoveAction("Scream Burst 1", 2);
-                        fsm.InsertMethod("Scream Burst 1", () => {
-                            createdSpell = ActivateSpell(6);
+                            fsm.RemoveAction("Scream Burst 1", 7);
+                            fsm.RemoveAction("Scream Burst 1", 6);
 
-                            createdSpell.transform.position = HeroController.instance.transform.position+new Vector3(0,2,0);
-                            createdSpell.GetComponent<Animator>().Play("NailBarrage_attack");
-                        }, 2);
+                            fsm.RemoveAction("Scream Burst 1", 2);
+                            fsm.InsertMethod("Scream Burst 1", () =>
+                            {
+                                createdSpell = ActivateSpell(6);
 
-                        fsm.RemoveAction("Scream Burst 2", 8);
-                        fsm.RemoveAction("Scream Burst 2", 7);
+                                createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, 2, 0);
+                                createdSpell.GetComponent<Animator>().Play("NailBarrage_attack");
+                            }, 2);
 
-                        fsm.RemoveAction("Scream Burst 2", 3);
-                        fsm.InsertMethod("Scream Burst 2", () => {
-                            createdSpell = ActivateSpell(6);
+                            fsm.RemoveAction("Scream Burst 2", 8);
+                            fsm.RemoveAction("Scream Burst 2", 7);
 
-                            createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, 2, 0);
-                            createdSpell.transform.localScale = new Vector3(-1.25f, 1.25f, 1.25f);
-                            createdSpell.GetComponent<Animator>().Play("NailBarrage_attack");
+                            fsm.RemoveAction("Scream Burst 2", 3);
+                            fsm.InsertMethod("Scream Burst 2", () =>
+                            {
+                                createdSpell = ActivateSpell(6);
 
-                            createdSpell = ActivateSpell(6);
+                                createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, 2, 0);
+                                createdSpell.transform.localScale = new Vector3(-1.25f, 1.25f, 1.25f);
+                                createdSpell.GetComponent<Animator>().Play("NailBarrage_attack");
 
-                            createdSpell.transform.localScale = new Vector3(-2f, 2f, 2f);
-                            createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, 2, 0);
-                            createdSpell.GetComponent<Animator>().Play("NailBarrage_attack");
-                        }, 3);
+                                createdSpell = ActivateSpell(6);
 
+                                createdSpell.transform.localScale = new Vector3(-2f, 2f, 2f);
+                                createdSpell.transform.position = HeroController.instance.transform.position + new Vector3(0, 2, 0);
+                                createdSpell.GetComponent<Animator>().Play("NailBarrage_attack");
+                            }, 3);
+                        }else
+                        {
+                            Log("Can't scream that way, not bought the vocal chords to do it");
+                            equipedShriekType = 3;
+                        }
                         shriekType = 2;
                     }
                     break;
@@ -1319,30 +1664,40 @@ namespace PronoesProMod
                     if (shriekType != 3)
                     {
                         RestoreShriek(fsm);
-                        Log("Apple shriek!");
+                        if (unlockableShrieks[equipedShriekType - 1].unlocked)
+                        {
+                            Log("Apple shriek!");
 
-                        fsm.RemoveAction("Scream Burst 1", 7);
-                        fsm.RemoveAction("Scream Burst 1", 6);
+                            fsm.RemoveAction("Scream Burst 1", 7);
+                            fsm.RemoveAction("Scream Burst 1", 6);
 
-                        fsm.RemoveAction("Scream Burst 1", 2);
-                        fsm.InsertMethod("Scream Burst 1", () => {
-                            createdSpell = ActivateSpell(2);
+                            fsm.RemoveAction("Scream Burst 1", 2);
+                            fsm.InsertMethod("Scream Burst 1", () =>
+                            {
+                                createdSpell = ActivateSpell(2);
 
-                            createdSpell.transform.position = HeroController.instance.transform.position;
-                            createdSpell.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 50);
-                            createdSpell.transform.localScale = new Vector3(0.35f, 0.35f, 0.35f);
-                        }, 2);
+                                createdSpell.transform.position = HeroController.instance.transform.position;
+                                createdSpell.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 50);
+                                createdSpell.transform.localScale = new Vector3(0.35f, 0.35f, 0.35f);
+                            }, 2);
 
-                        fsm.RemoveAction("Scream Burst 2", 8);
-                        fsm.RemoveAction("Scream Burst 2", 7);
+                            fsm.RemoveAction("Scream Burst 2", 8);
+                            fsm.RemoveAction("Scream Burst 2", 7);
 
-                        fsm.RemoveAction("Scream Burst 2", 3);
-                        fsm.InsertMethod("Scream Burst 2", () => {
-                            createdSpell = ActivateSpell(2);
+                            fsm.RemoveAction("Scream Burst 2", 3);
+                            fsm.InsertMethod("Scream Burst 2", () =>
+                            {
+                                createdSpell = ActivateSpell(2);
 
-                            createdSpell.transform.position = HeroController.instance.transform.position;
-                            createdSpell.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 50);
-                        }, 3);
+                                createdSpell.transform.position = HeroController.instance.transform.position;
+                                createdSpell.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 50);
+                            }, 3);
+                        }
+                        else
+                        {
+                            equipedShriekType = 0;
+                            Log("Can't scream that way, not bought the vocal chords to do it");
+                        }
 
                         shriekType = 3;
                     }
@@ -1357,7 +1712,7 @@ namespace PronoesProMod
             {
                 GameObject targetSpell = newSpells[spellNames[type] + spellUsedTimes[type]];
                 targetSpell.SetActive(true);
-                spellUsedTimes[type]=(spellUsedTimes[type]+1)%spellAmmount[type];
+                spellUsedTimes[type] = (spellUsedTimes[type] + 1) % spellAmmount[type];
                 return targetSpell;
             }
             return null;
@@ -1369,7 +1724,7 @@ namespace PronoesProMod
             for (int i = 0; i < ogDiveStateNames.Length; i++)
             {
                 if (ogDiveStates.ContainsKey(ogDiveStateNames[i])) {
-                    RestoreAction(fsm,ogDiveStates[ogDiveStateNames[i]]);
+                    RestoreAction(fsm, ogDiveStates[ogDiveStateNames[i]]);
                 }
             }
 
@@ -1400,7 +1755,7 @@ namespace PronoesProMod
         public void RestoreAction(PlayMakerFSM fsm, FsmState og)
         {
             int actionLength;
-            for (int i=0;i< fsm.FsmStates.Length; i++)
+            for (int i = 0; i < fsm.FsmStates.Length; i++)
             {
                 actionLength = fsm.FsmStates[i].Actions.Length;
                 if (fsm.FsmStates[i].Name == og.Name)
@@ -1570,8 +1925,8 @@ namespace PronoesProMod
                 charmSpawns = new Dictionary<string, Transform>();
             }
 
-            if(charmSpawns.ContainsKey("DeeShield_proj_0") && charmSpawns["DeeShield_proj_0"] == null){
-                for (int i = 0; i < 3; i++){
+            if (charmSpawns.ContainsKey("DeeShield_proj_0") && charmSpawns["DeeShield_proj_0"] == null) {
+                for (int i = 0; i < 3; i++) {
                     charmSpawns.Remove("DeeShield_proj_" + i.ToString());
                 }
             }
@@ -1583,9 +1938,9 @@ namespace PronoesProMod
                     List<Collider2D> colliders = new List<Collider2D>();
 
                     Transform prefav = GOBundle["newattacks"].LoadAsset<GameObject>("DeeShield_projectile").transform;
-                    Transform shield = GameObject.Instantiate(prefav,pos,rot);
+                    Transform shield = GameObject.Instantiate(prefav, pos, rot);
 
-                    DeeShield_Projectile proj= shield.gameObject.AddComponent<DeeShield_Projectile>();
+                    DeeShield_Projectile proj = shield.gameObject.AddComponent<DeeShield_Projectile>();
                     shield.gameObject.AddComponent<NonBouncer>();
 
                     DeeShield_ProjectileCollision[] cols = new DeeShield_ProjectileCollision[2];
@@ -1603,7 +1958,7 @@ namespace PronoesProMod
 
                     /* Weak attack */
                     dmg = shield.Find("WeakAttack").gameObject.AddComponent<DamageEnemies>();
-                    
+
                     cols[1] = dmg.gameObject.AddComponent<DeeShield_ProjectileCollision>();
                     cols[1].parent = proj.transform;
 
@@ -1616,8 +1971,8 @@ namespace PronoesProMod
 
 
 
-                    charmSpawns.Add("DeeShield_proj_"+i.ToString(), shield);
-                    shield.gameObject.SetActive(i==0);
+                    charmSpawns.Add("DeeShield_proj_" + i.ToString(), shield);
+                    shield.gameObject.SetActive(i == 0);
                     if (charmProjectileNums == null)
                     {
                         charmProjectileNums = new Dictionary<string, int>();
@@ -1627,7 +1982,7 @@ namespace PronoesProMod
                     proj.colliders = colliders.ToArray();
 
                 }
-            }else{
+            } else {
                 if (charmProjectileNums == null)
                 {
                     charmProjectileNums = new Dictionary<string, int>();
@@ -1635,17 +1990,17 @@ namespace PronoesProMod
                 }
                 else
                 {
-                    if (charmProjectileNums.ContainsKey("DeeShield")){
+                    if (charmProjectileNums.ContainsKey("DeeShield")) {
                         charmProjectileNums["DeeShield"] = (charmProjectileNums["DeeShield"] + 1) % 3;
-                    }else{
+                    } else {
                         charmProjectileNums.Add("DeeShield", 0);
                     }
                 }
 
-                if (charmSpawns.ContainsKey("DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())) && charmSpawns["DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())]!=null){
+                if (charmSpawns.ContainsKey("DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())) && charmSpawns["DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())] != null) {
                     charmSpawns["DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())].gameObject.SetActive(true);
-                    charmSpawns["DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())].position=pos;
-                    charmSpawns["DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())].rotation=rot;
+                    charmSpawns["DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())].position = pos;
+                    charmSpawns["DeeShield_proj_" + (charmProjectileNums["DeeShield"].ToString())].rotation = rot;
                 }
             }
         }
@@ -1662,6 +2017,9 @@ namespace PronoesProMod
 
         #region Local variables
         public PronoesproLocalSaveData LocalSaveData { get; set; } = new PronoesproLocalSaveData();
+
+        public bool ToggleButtonInsideMenu => throw new NotImplementedException();
+
         public void OnLoadLocal(PronoesproLocalSaveData s) => LoadData(s);
         public PronoesproLocalSaveData OnSaveLocal() => LocalSaveData;
         #endregion
@@ -1671,10 +2029,6 @@ namespace PronoesProMod
             ModHooks.SavegameLoadHook += slot =>
               {
                   LocalSaveData = new PronoesproLocalSaveData();
-
-                  LocalSaveData.hasShieldSpell = hasShieldSpell;
-                  LocalSaveData.hasSwordsSpell = hasSwordsSpell;
-                  LocalSaveData.hasTeleportSpell = hasTeleportSpell;
 
                   LocalSaveData.equipedQuake = diveType;
                   LocalSaveData.equipedShriek = shriekType;
@@ -1690,13 +2044,14 @@ namespace PronoesProMod
             Log("Loading data...");
             LocalSaveData = s;
 
-            hasShieldSpell = LocalSaveData.hasShieldSpell;
-            hasSwordsSpell = LocalSaveData.hasSwordsSpell;
-            hasTeleportSpell = LocalSaveData.hasTeleportSpell;
+            /*unlockedSouls = LocalSaveData.unlockedSouls;
+            unlockedDives = LocalSaveData.unlockedDives;
+            unlockedShrieks = LocalSaveData.unlockedShrieks;
+            */
 
             dive = LocalSaveData.equipedQuake;
-            shriek= LocalSaveData.equipedShriek;
-            soul= LocalSaveData.equipedSouls;
+            shriek = LocalSaveData.equipedShriek;
+            soul = LocalSaveData.equipedSouls;
 
             proSkinUsing = LocalSaveData.proKnightSkin;
             proIntroDone = LocalSaveData.proInttroductionDone;
@@ -1708,7 +2063,7 @@ namespace PronoesProMod
         public void InitializeUI()
         {
             AssetBundle ab = PronoesProMod.Instance.GOBundle["ui"];
-            if (ab.Contains("UI")) 
+            if (ab.Contains("UI"))
             {
                 levelNameDisplay = GameObject.Instantiate(ab.LoadAsset<GameObject>("UI"));
                 GameObject.DontDestroyOnLoad(levelNameDisplay);
@@ -1722,9 +2077,9 @@ namespace PronoesProMod
                 txt.text = "";
 
                 Transform nameplate = box.transform.Find("NamePlate");
-                
+
                 txt = nameplate.transform.Find("SuperName").GetComponent<Text>();
-                box.nameSuperTxt= txt;
+                box.nameSuperTxt = txt;
                 txt.text = "";
 
                 txt = nameplate.transform.Find("Name").GetComponent<Text>();
@@ -1739,9 +2094,15 @@ namespace PronoesProMod
 
                 Log("Initializing spell-swap UI");
                 spellChangeUI = levelNameDisplay.transform.Find("SpellChange");
+                proShopUI = levelNameDisplay.transform.Find("ProMenu");
+                proShop = proShopUI.gameObject.AddComponent<ProShopUI>();
+
+                Log("Initializing Pro shop icons");
+                proShop.SetLockedSprite(ab.LoadAsset<Sprite>("other_ProMenu"));
+
 
                 txt = spellChangeUI.Find("Soul").Find("Text").GetComponent<Text>();
-                txt.text = "Soul (press " + Language.Language.Get("BUTTON_QCAST", "MainMenu")+" to change)";
+                txt.text = "Soul (press " + Language.Language.Get("BUTTON_QCAST", "MainMenu") + " to change)";
 
                 txt = spellChangeUI.Find("Dive").Find("Text").GetComponent<Text>();
                 txt.text = "Dive (press " + Language.Language.Get("BUTTON_DASH", "MainMenu") + " to change)";
@@ -1753,19 +2114,75 @@ namespace PronoesProMod
                 spellChangeUI.gameObject.SetActive(false);
 
                 spellSprites = new Dictionary<string, Sprite>();
+
                 Log("Starting to get spell swap sprites");
-                for(int i = 0; i < spellSpriteNames.Length; i++)
+                for (int i = 0; i < spellSpriteNames.Length; i++)
                 {
-                    Sprite foundSprite= ab.LoadAsset<Sprite>(spellSpriteNames[i]);
-                    spellSprites.Add(spellSpriteNames[i], foundSprite);
-                    Log("found sprite "+spellSpriteNames[i]);
+                    Sprite foundSprite = ab.LoadAsset<Sprite>(spellSpriteNames[i]);
+                    if (foundSprite != null)
+                    {
+                        spellSprites.Add(spellSpriteNames[i], foundSprite);
+                        Log("found sprite " + spellSpriteNames[i]);
+                    }
                 }
 
-            }
-            else
-            {
+                proShop.SetSpellSprites(GetSpellSprites("soul"), GetSpellSprites("dive"), GetSpellSprites("shriek"));
+                proShopUI.gameObject.SetActive(false);
+
+                string _desLocName;
+                locationIcons = new Dictionary<string, Sprite>();
+                for (int i = 0; i < locationNames.Length; i++)
+                {
+                    _desLocName = locationNames[i] + "Icon";
+                    if (ab.Contains(_desLocName))
+                    {
+                        Sprite foundSprite = ab.LoadAsset<Sprite>(_desLocName);
+                        Log("Found icon " + _desLocName);
+                        locationIcons.Add(_desLocName, foundSprite);
+                    }else{
+                        Log("Icon " + locationNames[i] + " not found");
+                    }
+                }
+            }else{
                 Log("Level Names not found");
             }
+
+            On.SaveSlotBackgrounds.GetBackground_MapZone += GetCraftedTownBG;
+            On.SaveGameData.ctor += SaveLocation;
+        }
+
+        private void SaveLocation(On.SaveGameData.orig_ctor orig, SaveGameData self, PlayerData playerData, SceneData sceneData)
+        {
+            if (playerData.respawnScene == "CreatedTown"){
+                playerData.mapZone = (GlobalEnums.MapZone)69420;
+            }
+            orig(self, playerData, sceneData);
+        }
+
+        private AreaBackground GetCraftedTownBG(On.SaveSlotBackgrounds.orig_GetBackground_MapZone orig, SaveSlotBackgrounds self, GlobalEnums.MapZone mapZone)
+        {
+            if (mapZone == (GlobalEnums.MapZone)69420){
+                AreaBackground _bg = new AreaBackground();
+
+                _bg.areaName = (GlobalEnums.MapZone)69420;
+                _bg.backgroundImage =locationIcons["CraftedTownIcon"];
+
+                return _bg;
+            }
+            return orig(self, mapZone);
+        }
+
+        public Sprite[] GetSpellSprites(string _ending)
+        {
+            List<Sprite> _sprites=new List<Sprite>();
+            foreach(string _key in spellSprites.Keys)
+            {
+                if (_key.EndsWith(_ending))
+                {
+                    _sprites.Add(spellSprites[_key]);
+                }
+            }
+            return _sprites.ToArray();
         }
 
         public void ShowLevelName(int titleType)
@@ -1785,7 +2202,7 @@ namespace PronoesProMod
             }
         }
 
-        public void ShowDialogBox(string nameSuper,string name,string NameSub,string[] dialog,string[] sounds,float dialogSpeed=1)
+        public void ShowDialogBox(string nameSuper, string name, string NameSub, string[] dialog, string[] sounds, float dialogSpeed = 1)
         {
             if (levelNameDisplay != null)
             {
@@ -1796,7 +2213,7 @@ namespace PronoesProMod
 
                 if (dialBox != null)
                 {
-                    dialBox.SetDialog(new string[] { name, nameSuper, NameSub }, dialog,sounds, dialogSpeed);
+                    dialBox.SetDialog(new string[] { name, nameSuper, NameSub }, dialog, sounds, dialogSpeed);
                     dialBox.onConversationContinue.RemoveAllListeners();
                     dialBox.onConversationEnd.RemoveAllListeners();
                     dialBox.onConversationStart.RemoveAllListeners();
@@ -1804,7 +2221,7 @@ namespace PronoesProMod
             }
         }
 
-        public void ChangeDialogEvents(UnityEvent start,UnityEvent next, UnityEvent end)
+        public void ChangeDialogEvents(UnityEvent start, UnityEvent next, UnityEvent end)
         {
             if (levelNameDisplay != null) {
                 Transform box = levelNameDisplay.transform.Find("DialogBox");
@@ -1812,35 +2229,75 @@ namespace PronoesProMod
 
                 if (dialBox != null)
                 {
-                    if (start!=null) {
+                    if (start != null) {
                         dialBox.onConversationStart.AddListener(start.Invoke);
-                    }else{
+                    } else {
                         dialBox.onConversationStart.RemoveAllListeners();
                     }
 
-                    if (next!=null)
+                    if (next != null)
                     {
                         dialBox.onConversationContinue.AddListener(next.Invoke);
-                    }else{
+                    } else {
                         dialBox.onConversationContinue.RemoveAllListeners();
                     }
 
                     if (end != null)
                     {
-                        dialBox.onConversationEnd.AddListener( end.Invoke);
-                    }else{
+                        dialBox.onConversationEnd.AddListener(end.Invoke);
+                    } else {
                         dialBox.onConversationEnd.RemoveAllListeners();
                     }
                 }
             }
         }
 
-        public void StartInteraction(Vector2 pos,string prompt)
+        public void StartInteraction(Vector2 pos, string prompt)
         {
             if (interactionPropt != null)
             {
                 interactionPropt.StartInteractable(pos);
                 interactionPropt.SetInteractionPrompt(prompt);
+            }
+        }
+
+        bool showShopUI;
+        public void ShowProShop(){
+            if (!showShopUI)
+            {
+                showShopUI = true;
+                proShopUI.gameObject.SetActive(true);
+                Animator _anim = levelNameDisplay.GetComponent<Animator>();
+                if (_anim != null)
+                {
+                    _anim.SetBool("ShowShop", true);
+                }
+
+                PlayerData.instance.SetBool("disablePause", true);
+                HeroController.instance.SendMessage("RelinquishControl");
+                HeroController.instance.SendMessage("StopAnimationControl");
+
+                HeroController.instance.GetComponent<tk2dSpriteAnimator>().Play("Idle");
+                HeroController.instance.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+            }
+        }
+
+        public void HideProShop()
+        {
+            if (showShopUI)
+            {
+                showShopUI = false;
+                Animator _anim = levelNameDisplay.GetComponent<Animator>();
+                if (_anim != null)
+                {
+                    _anim.SetBool("ShowShop", false);
+                }
+
+                PlayerData.instance.SetBool("disablePause", false);
+                HeroController.instance.SendMessage("RegainControl");
+                HeroController.instance.SendMessage("StartAnimationControl");
+
+                proShop.HideShopUI();
             }
         }
 
@@ -1930,6 +2387,7 @@ namespace PronoesProMod
             GameObject.Destroy(levelNameDisplay);
             levelNameDisplay = null;
         }
+
         #endregion
 
         #region Language
@@ -1937,18 +2395,18 @@ namespace PronoesProMod
         private string LanguageGet(string key, string sheetTitle, string orig)
         {
             string gottenValue;
-            if(LanguageData.englishSentences.TryGetValue(key,out gottenValue))
+            if (LanguageData.englishSentences.TryGetValue(key, out gottenValue))
             {
                 return gottenValue;
             }
 
-            if(upgradedCharms[0] )
+            if (upgradedCharms[0])
             {
                 if (key == "CHARM_DESC_31" && LanguageData.englishSentences.ContainsKey("DashmasterUpgrade_Desc"))
                 {
                     return LanguageData.englishSentences["DashmasterUpgrade_Desc"];
                 }
-                if(key=="CHARM_NAME_31" && LanguageData.englishSentences.ContainsKey("DashmasterUpgrade_Name"))
+                if (key == "CHARM_NAME_31" && LanguageData.englishSentences.ContainsKey("DashmasterUpgrade_Name"))
                 {
                     return LanguageData.englishSentences["DashmasterUpgrade_Name"];
                 }
@@ -1967,75 +2425,47 @@ namespace PronoesProMod
             }
 
 
-            if (sheetTitle == "UI" && spellNameKeys.ContainsKey(key))
+            if (sheetTitle == "UI")
             {
-                Log("Found Key!");
-
-                int spellType = 0;
-                if (key.ToLower().Contains("fireball"))
+                if (key.ToLower().EndsWith("_og"))
                 {
-                    if (soulType > 0 && soulType - 1<spellNameKeys[key].Length && LanguageData.englishSentences.ContainsKey(spellNameKeys[key][soulType - 1]))
+                    Language.Language.orig_Get(key.Replace("_og", ""), sheetTitle);
+                }
+                else
+                {
+                    if (key.ToLower().Contains("fireball") && soulType > 0)
                     {
-                        Log("Spell type: fireball");
-                        spellType = soulType;
+                        if (key.StartsWith(soulInventoryNameKey))
+                        {
+                            return LanguageData.englishSentences[unlockableSouls[soulType - 1].spellNameKey];
+                        }
+                        else if (key.StartsWith(soulInventoryDescriptionKey))
+                        {
+                            return LanguageData.englishSentences[unlockableSouls[soulType - 1].spellDescriptionKey];
+                        }
                     }
-                }
-                else if (key.ToLower().Contains("scream"))
-                {
-                    if (shriekType > 0 && shriekType-1< spellNameKeys[key].Length && LanguageData.englishSentences.ContainsKey(spellNameKeys[key][shriekType - 1]))
+                    else if (key.ToLower().Contains("quake") && soulType > 0)
                     {
-                        Log("Spell type: scream");
-                        spellType = shriekType;
+                        if (key.StartsWith(diveInventoryNameKey))
+                        {
+                            return LanguageData.englishSentences[unlockableDives[diveType - 1].spellNameKey];
+                        }
+                        else if (key.StartsWith(diveInventoryDescriptionKey))
+                        {
+                            return LanguageData.englishSentences[unlockableDives[diveType - 1].spellDescriptionKey];
+                        }
                     }
-                }
-                else if (key.ToLower().Contains("quake"))
-                {
-                    if (diveType > 0 && diveType-1< spellNameKeys[key].Length && LanguageData.englishSentences.ContainsKey(spellNameKeys[key][diveType - 1]))
+                    else if (key.ToLower().Contains("scream") && soulType > 0)
                     {
-                        Log("Spell type: dive");
-                        spellType = diveType;
+                        if (key.StartsWith(shriekInventoryNameKey))
+                        {
+                            return LanguageData.englishSentences[unlockableShrieks[shriekType - 1].spellNameKey];
+                        }
+                        else if (key.StartsWith(shriekInventoryDescriptionKey))
+                        {
+                            return LanguageData.englishSentences[unlockableShrieks[shriekType - 1].spellDescriptionKey];
+                        }
                     }
-                }
-                if (spellType > 0)
-                {
-                    Log("Found spell type!");
-                    return LanguageData.englishSentences[spellNameKeys[key][spellType-1]];
-                }
-            }
-
-            if (sheetTitle == "UI" && spellDescKeys.ContainsKey(key))
-            {
-                Log("Found Key!");
-
-                int spellType = 0;
-                if (key.ToLower().Contains("fireball"))
-                {
-                    if (soulType > 0 && soulType - 1 < spellDescKeys[key].Length && LanguageData.englishSentences.ContainsKey(spellDescKeys[key][soulType - 1]))
-                    {
-                        Log("Spell type: fireball");
-                        spellType = soulType;
-                    }
-                }
-                else if (key.ToLower().Contains("scream"))
-                {
-                    if (shriekType > 0 && shriekType - 1 < spellDescKeys[key].Length && LanguageData.englishSentences.ContainsKey(spellDescKeys[key][shriekType - 1]))
-                    {
-                        Log("Spell type: scream");
-                        spellType = shriekType;
-                    }
-                }
-                else if (key.ToLower().Contains("quake"))
-                {
-                    if (diveType > 0 && diveType - 1 < spellDescKeys[key].Length && LanguageData.englishSentences.ContainsKey(spellDescKeys[key][diveType - 1]))
-                    {
-                        Log("Spell type: dive");
-                        spellType = diveType;
-                    }
-                }
-                if (spellType > 0)
-                {
-                    Log("Found spell type!");
-                    return LanguageData.englishSentences[spellDescKeys[key][spellType - 1]];
                 }
             }
 
@@ -2055,7 +2485,7 @@ namespace PronoesProMod
 
     public class PronoesproLocalSaveData
     {
-        public bool hasSwordsSpell, hasShieldSpell, hasTeleportSpell;
+        public bool[] unlockedSouls, unlockedDives, unlockedShrieks;
         public int equipedSouls, equipedShriek, equipedQuake;
 
         public bool proKnightSkin;

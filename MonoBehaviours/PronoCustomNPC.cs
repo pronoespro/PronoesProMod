@@ -211,13 +211,6 @@ namespace PronoesProMod.MonoBehaviours
             }
         }
 
-        public bool KnightReady()
-        {
-            return HeroController.instance.CheckTouchingGround() 
-                && Mathf.Abs(HeroController.instance.GetComponent<Rigidbody2D>().velocity.y) < 0.1f 
-                && HeroController.instance.acceptingInput;
-        }
-
         public void OnTriggerStay2D(Collider2D collider)
         {
             DialogSettings dialog = GetCurrentSettings();
@@ -226,7 +219,7 @@ namespace PronoesProMod.MonoBehaviours
                 {
                     PronoesProMod.Instance.StartInteraction(new Vector3(transform.position.x,transform.position.y,PronoesProMod.Instance.interactionPropt.transform.position.z), dialog.interactionPrompt);
 
-                    if (InputHandler.Instance.inputActions.up.IsPressed && !PronoesProMod.IsGamePaused() && KnightReady())
+                    if (InputHandler.Instance.inputActions.up.IsPressed && !PronoesProMod.IsGamePaused() && PronoesProMod.Instance.KnightReady())
                     {
                         PronoesProMod.Instance.ShowDialogBox(dialog.npcSuperName, dialog.npcName, dialog.npcSubName, dialog.conversation, dialog.dialogSounds, dialog.dialogSpeed);
                         PronoesProMod.Instance.ChangeDialogEvents(dialog.onStart, dialog.onContinue, dialog.onEnd);

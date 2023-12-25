@@ -183,7 +183,6 @@ namespace PronoesProMod.MonoBehaviours
             anim.SetBool("ShowDialog", false);
 
             PronoesProMod.Instance.Log("Calling conversation end!");
-            onConversationEnd.Invoke();
             
             yield return new WaitForSeconds(0.25f);
 
@@ -195,6 +194,7 @@ namespace PronoesProMod.MonoBehaviours
             HeroController.instance.SendMessage("StartAnimationControl");
             
             PlayerData.instance.SetBool("disablePause", false);
+            onConversationEnd.Invoke();
             gameObject.SetActive(false);
             //sprite.GetCurrentSpriteDef().material.mainTexture=s;
         }

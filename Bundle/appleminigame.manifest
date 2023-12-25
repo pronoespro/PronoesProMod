@@ -1,9 +1,9 @@
 ManifestFileVersion: 0
-CRC: 1202519467
+CRC: 1534128539
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b8ff52aec139c9357e88c878dcef14fa
+    Hash: 6ac6ca06fe2092c2877d20808eb40c31
   TypeTreeHash:
     serializedVersion: 2
     Hash: 31d6cfe0d16ae931b73c59d7e0c089c0
@@ -12,4 +12,5 @@ ClassTypes: []
 Assets:
 - Assets/Scenes/appleminigame.unity
 Dependencies:
+- F:/Cesar/projects/Unity Game Mods/HK/PronoesMod/PronoesProMod/PronoesProMod/Bundle/ui
 - F:/Cesar/projects/Unity Game Mods/HK/PronoesMod/PronoesProMod/PronoesProMod/Bundle/newattacks

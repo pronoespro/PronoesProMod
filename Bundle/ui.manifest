@@ -1,9 +1,9 @@
 ManifestFileVersion: 0
-CRC: 1614250346
+CRC: 517820124
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: db888e53816371d2118cb6d23a0c24da
+    Hash: fc5d42e3eebad5998adb8733b4a3e8bb
   TypeTreeHash:
     serializedVersion: 2
     Hash: fc8ace4b2a7a1c1bd428054fc0aee3c2
@@ -52,20 +52,24 @@ ClassTypes:
 - Class: 225
   Script: {instanceID: 0}
 Assets:
-- Assets/Sprites/Icons/icon_sawblade_shriek.png
-- Assets/Sprites/Icons/icon_apple_soul.png
-- Assets/Sprites/Icons/icon_nailmaster_shriek.png
-- Assets/Sprites/Icons/icon_nailmaster_soul.png
-- Assets/Sprites/Icons/icon_def_soul.png
+- Assets/Sprites/UI/Icons/icon_sawblade_shriek.png
+- Assets/Sprites/UI/Icons/icon_apple_soul.png
+- Assets/Sprites/UI/Icons/icon_nailmaster_shriek.png
+- Assets/Sprites/UI/Icons/icon_nailmaster_soul.png
+- Assets/Sprites/UI/Icons/icon_def_soul.png
+- Assets/Sprites/UI/ProMenu/sideArrow_ProMenu.png
 - Assets/Prefavs/InteractPrompt.prefab
-- Assets/Sprites/Icons/icon_def_shriek.png
-- Assets/Sprites/Icons/icon_sawblade_soul.png
-- Assets/Sprites/Icons/icon_sawblade_dive.png
-- Assets/Sprites/Icons/icon_apple_dive.png
-- Assets/Sprites/Icons/icon_pro_soul.png
+- Assets/Sprites/UI/Icons/icon_def_shriek.png
+- Assets/Sprites/UI/Icons/icon_sawblade_soul.png
+- Assets/Sprites/UI/Icons/icon_sawblade_dive.png
+- Assets/Sprites/UI/Icons/icon_apple_dive.png
+- Assets/Sprites/UI/Icons/icon_pro_soul.png
 - Assets/Prefavs/InteractionPrompts.prefab
 - Assets/Prefavs/UI.prefab
-- Assets/Sprites/Icons/icon_nailmaster_dive.png
-- Assets/Sprites/Icons/icon_apple_shriek.png
-- Assets/Sprites/Icons/icon_def_dive.png
+- Assets/Sprites/UI/craftedTownIcon.png
+- Assets/Sprites/UI/Icons/icon_nailmaster_dive.png
+- Assets/Sprites/UI/ProMenu/other_ProMenu.png
+- Assets/Sprites/UI/ProMenu/top and bottom_ProMenu.png
+- Assets/Sprites/UI/Icons/icon_apple_shriek.png
+- Assets/Sprites/UI/Icons/icon_def_dive.png
 Dependencies: []

@@ -1,0 +1,19 @@
+ManifestFileVersion: 0
+CRC: 1653433236
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f95c671161c0e0bfc9a40303245053f2
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 460b4f5d62b6facbccf7c01637df8f00
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+Assets:
+- Assets/Sprites/UI/charms/dashpro.png
+- Assets/Sprites/UI/charms/deeshield.png
+Dependencies: []

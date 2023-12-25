@@ -1,4 +1,5 @@
 ﻿using PronoesProMod.MonoBehaviours;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,7 +15,7 @@ namespace PronoesProMod
         //Entrance
         public string[] entranceGOs = new string []{ "Portal", "GroundObjs", "Ground","crates_d", "Background", "Spikes_spk" };
         //Town
-        public string[] townGOs = new string[] { "TownGround","Decorations", "crates_d", "NoBounce_nb", "Spikes_spk","Lamps_l", "Basket", "DeeCart_points", "Temple", "ultimate bench" };
+        public string[] townGOs = new string[] { "TownGround","Decorations", "crates_d", "NoBounce_nb", "Spikes_spk","Lamps_l", "Basket", "DeeCart_points", "Temple", "ultimate bench", "AnimatedOnWalkBy_animWalk", "decorations_Christmas", "interactables_elevators" };
         public DialogPromptInteractableObject[] townInteractables = new DialogPromptInteractableObject[] { new DialogPromptInteractableObject("ultimate bench", new string[] { "UltimateBench1", "UltimateBench2" },new string[] { ""},"Rest")};
         public Dictionary<string, DialogSettings[]> townNPCdialogs = new Dictionary<string, DialogSettings[]> {
             {"Pro", new DialogSettings[] { new DialogSettings(DialogSettings.GetDefaultMask(), new string[] { "prono_welcome_0", "prono_welcome_1", "prono_welcome_2" }, new string[] { "kahmo"}, "Pronoespro_MAIN", "Pronoespro_SUB", "Pronoespro_SUPER", 2f,true,true,inteactionDisplay:"Talk",dialogDreamNail:new string[]{ "prono_dreamnail_0" },soundDreamNail:new string[]{  },dialogRequirements:new string[]{ "var:0"}),
@@ -158,16 +159,21 @@ namespace PronoesProMod
                 PronoCustomNPC pro= LoadCharacter("npcs", new Vector3(105,13.75f,1),"Pro");
 
                 if (pro != null){
-                    pro.dialogs[0].onEnd.AddListener(() =>PronoesProMod.Instance.IntroDone());
+                    pro.dialogs[0].onEnd.AddListener(() =>PronoesProMod.Instance.FinishIntro());
 
                     pro.dialogs[1].onEnd.AddListener(() => UpgradeCharm(0));
                     pro.dialogs[2].onEnd.AddListener(() => UpgradeCharm(1));
                     PronoesProMod.Instance.Log("Added charm upgrade OwO");
 
-                    pro.dialogs[3].onEnd.AddListener(() => SetProKnightSkin());
-                    pro.dialogs[3].onEnd.AddListener(() => SetProKnightSkin());
+                    pro.dialogs[4].onEnd.AddListener(() => SetProKnightSkin());
+                    pro.dialogs[4].onEnd.AddListener(() => SetProKnightSkin());
                     PronoesProMod.Instance.Log("Added costume upgrade! YAY!");
-                    //pro.dialogs[1].onStart.AddListener(() => NextDialogOfNPC(pro));
+
+                    pro.dialogs[0].onEnd.AddListener(() => ShowProShop());
+                    pro.dialogs[1].onEnd.AddListener(() => ShowProShop());
+                    pro.dialogs[2].onEnd.AddListener(() => ShowProShop());
+                    pro.dialogs[3].onEnd.AddListener(() => ShowProShop());
+                    pro.dialogs[4].onEnd.AddListener(() => ShowProShop());
                 }
 
                 //CreateGateway("right",new Vector2(271, 10.28f), new Vector2(5, 1), "appleminigame", "left", true,false,GameManager.SceneLoadVisualizations.Default);
@@ -221,6 +227,12 @@ namespace PronoesProMod
             orig(self,additiveGateSearch);
         }
 
+        public void ShowProShop()
+        {
+            //-->> PUT BACK AFTER UPDATE <<--
+            //PronoesProMod.Instance.ShowProShop();
+        }
+
         public void LoadInteractables(DialogPromptInteractableObject[] interactables)
         {
 
@@ -251,6 +263,10 @@ namespace PronoesProMod
 
         public void LoadObjects(string[] objNames)
         {
+
+            var dt = DateTime.Now;
+            DateTime _christmasTime = new DateTime(dt.Year, 12, 25, 12, 0, 0);
+
             GameObject hitPart = GameObject.Find(hitParticlesName);
             if (hitPart != null)
             {
@@ -276,6 +292,53 @@ namespace PronoesProMod
                 Transform foundGO = GameObject.Find(objNames[i]).transform;
                 if (foundGO != null)
                 {
+                    if (objNames[i].ToLower().Contains("_christmas"))
+                    { 
+                        foundGO.gameObject.SetActive(Math.Abs((_christmasTime - dt).TotalDays) <= 15.0d);
+                    }
+                    if (objNames[i].Contains("_elevators"))
+                    {
+                        for(int _child= 0; _child < foundGO.childCount; _child++)
+                        {
+                            if (foundGO.GetChild(_child).Find("Points") != null && foundGO.GetChild(_child).Find("Offset")!=null) {
+                                SpinningElevator _elevator = foundGO.GetChild(_child).gameObject.AddComponent<SpinningElevator>();
+
+                                Transform _pointsParent = foundGO.GetChild(_child).Find("Points"),
+                                    _offsetPoint = foundGO.GetChild(_child).Find("Offset"),
+                                    _animator= foundGO.GetChild(_child).Find("Animation");
+
+                                Vector3[] _points = new Vector3[_pointsParent.childCount];
+                                for(int _point = 0; _point <_points.Length;_point++)
+                                {
+                                    _points[_point] = _pointsParent.GetChild(_point).position;
+                                }
+
+                                Animator _anim = (_animator != null) ? _animator.GetComponent<Animator>() : null;
+
+                                _elevator.Setup(new Vector2(_offsetPoint.localPosition.x,_offsetPoint.localPosition.y),_points,10, _anim);
+                            }
+                        }
+                    }
+                    if (objNames[i].Contains("_animWalk"))
+                    {
+                        foreach (Animator anim in foundGO.GetComponentsInChildren<Animator>())
+                        {
+
+                            AnimatedWalkByObject _walkBy = anim.gameObject.AddComponent<AnimatedWalkByObject>();
+                            _walkBy.anim = anim;
+                            _walkBy.needsDash = anim.gameObject.name.Contains("_dashNeed");
+                            _walkBy.noDirection= anim.gameObject.name.Contains("_noDir");
+
+                            BoxCollider2D _col = anim.GetComponent<BoxCollider2D>();
+
+                            if (_col!=null){
+                                _walkBy.boxSize = _col.size*transform.localScale;
+                                _walkBy.offset = _col.offset*transform.localScale;
+                            }
+
+                            PronoesProMod.Instance.Log("Animated when walk by loaded");
+                        }
+                    }
                     foreach (SpriteRenderer rend in foundGO.GetComponentsInChildren<SpriteRenderer>())
                     {
                         if (objNames[i].Contains("_Dif"))

@@ -12,6 +12,9 @@ namespace PronoesProMod
         public static Dictionary<string, string> englishSentences = new Dictionary<string, string>()
         {
 
+            //Location names
+            {"69420","Crafted Town" },
+
             //NPCs
 
             //1: PRO

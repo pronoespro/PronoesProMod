@@ -62,38 +62,9 @@
     <Copy Condition="'$(DocumentationFile)'!=''" SourceFiles="ReadMe.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb;$(TargetDir)/$(TargetName).xml" DestinationFolder="$(HollowKnightModsDirectory)" />
     <Copy Condition="'$(DocumentationFile)'==''" SourceFiles="ReadMe.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(HollowKnightModsDirectory)" />
   </Target>
-    
-    
-  <ItemGroup>
-    <EmbeddedResource Include="Bundle\entrance" />
-    <EmbeddedResource Include="Bundle\createdtown" />
-    <EmbeddedResource Include="Bundle\appleminigame" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <EmbeddedResource Include="Bundle\portal" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Bundle\brokenobjs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Bundle\newattacks" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Bundle\music" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Bundle\sounds" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Bundle\ui" />
-  </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Bundle\npcs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Bundle\skins" />
+    <EmbeddedResource Include="Bundle\*" Exclude="Bundle\*.manifest; Bundle\old\*; Bundle\old"/>
   </ItemGroup>
   
   <ItemGroup>

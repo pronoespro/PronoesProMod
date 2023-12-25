@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 106288170
+CRC: 2548485599
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -43,4 +43,11 @@ AssetBundleManifest:
     Info_11:
       Name: appleminigame
       Dependencies:
-        Dependency_0: newattacks
+        Dependency_0: ui
+        Dependency_1: newattacks
+    Info_12:
+      Name: charmupgrades
+      Dependencies: {}
+    Info_13:
+      Name: animations
+      Dependencies: {}
