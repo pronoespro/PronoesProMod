@@ -34,4 +34,3 @@ And enjoy a peaceful time on this new, more relaxing expansion mod for Hollow Kn
 
 Check out the full devlog playlist here:
 https://youtube.com/playlist?list=PL5vlCuqr1W9M0mkR0wjeaUuLpcP6pE9XN&feature=shared
-https://youtu.be/9NJBWdNSopk?feature=shared
